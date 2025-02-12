@@ -13,4 +13,5 @@ yarn cache clean
 yarn config set registry 'https://mirrors.huaweicloud.com/repository/npm'
 yarn install
 yarn dev
+# 等待一段漫长的时间，访问 http://localhost:3000
 ```
