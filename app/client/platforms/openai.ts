@@ -41,6 +41,7 @@ import {
   getMessageTextContent,
   isVisionModel,
   isDalle3 as _isDalle3,
+  getMessageTextContentWithoutThinking,
 } from "@/app/utils";
 import { fetch } from "@/app/utils/stream";
 
@@ -216,7 +217,9 @@ export class ChatGPTApi implements LLMApi {
       for (const v of options.messages) {
         const content = visionModel
           ? await preProcessImageContent(v.content)
-          : getMessageTextContent(v);
+          : v.role === "assistant" // 如果 role 是 assistant
+          ? getMessageTextContentWithoutThinking(v) // 调用 getMessageTextContentWithoutThinking
+          : getMessageTextContent(v); // 否则调用 getMessageTextContent
         if (!(isO1 && v.role === "system"))
           messages.push({ role: v.role, content });
       }
