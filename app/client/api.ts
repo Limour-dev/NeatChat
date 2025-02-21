@@ -183,7 +183,6 @@ export function validString(x: string): boolean {
 
 export function getHeaders(ignoreHeaders: boolean = false) {
   const accessStore = useAccessStore.getState();
-  const chatStore = useChatStore.getState();
   let headers: Record<string, string> = {};
   if (!ignoreHeaders) {
     headers = {
@@ -192,120 +191,13 @@ export function getHeaders(ignoreHeaders: boolean = false) {
     };
   }
 
-  const clientConfig = getClientConfig();
+  const apiKey = accessStore.openaiApiKey;
 
-  function getConfig() {
-    const modelConfig = chatStore.currentSession().mask.modelConfig;
-    const isGoogle = modelConfig.providerName === ServiceProvider.Google;
-    const isAzure = modelConfig.providerName === ServiceProvider.Azure;
-    const isAnthropic = modelConfig.providerName === ServiceProvider.Anthropic;
-    const isBaidu = modelConfig.providerName == ServiceProvider.Baidu;
-    const isByteDance = modelConfig.providerName === ServiceProvider.ByteDance;
-    const isAlibaba = modelConfig.providerName === ServiceProvider.Alibaba;
-    const isMoonshot = modelConfig.providerName === ServiceProvider.Moonshot;
-    const isIflytek = modelConfig.providerName === ServiceProvider.Iflytek;
-    const isXAI = modelConfig.providerName === ServiceProvider.XAI;
-    const isChatGLM = modelConfig.providerName === ServiceProvider.ChatGLM;
-    const isEnabledAccessControl = accessStore.enabledAccessControl();
-    const apiKey = isGoogle
-      ? accessStore.googleApiKey
-      : isAzure
-      ? accessStore.azureApiKey
-      : isAnthropic
-      ? accessStore.anthropicApiKey
-      : isByteDance
-      ? accessStore.bytedanceApiKey
-      : isAlibaba
-      ? accessStore.alibabaApiKey
-      : isMoonshot
-      ? accessStore.moonshotApiKey
-      : isXAI
-      ? accessStore.xaiApiKey
-      : isChatGLM
-      ? accessStore.chatglmApiKey
-      : isIflytek
-      ? accessStore.iflytekApiKey && accessStore.iflytekApiSecret
-        ? accessStore.iflytekApiKey + ":" + accessStore.iflytekApiSecret
-        : ""
-      : accessStore.openaiApiKey;
-    return {
-      isGoogle,
-      isAzure,
-      isAnthropic,
-      isBaidu,
-      isByteDance,
-      isAlibaba,
-      isMoonshot,
-      isIflytek,
-      isXAI,
-      isChatGLM,
-      apiKey,
-      isEnabledAccessControl,
-    };
-  }
-
-  function getAuthHeader(): string {
-    return isAzure
-      ? "api-key"
-      : isAnthropic
-      ? "x-api-key"
-      : isGoogle
-      ? "x-goog-api-key"
-      : "Authorization";
-  }
-
-  const {
-    isGoogle,
-    isAzure,
-    isAnthropic,
-    isBaidu,
-    apiKey,
-    isEnabledAccessControl,
-  } = getConfig();
-  // when using baidu api in app, not set auth header
-  if (isBaidu && clientConfig?.isApp) return headers;
-
-  const authHeader = getAuthHeader();
-
-  const bearerToken = getBearerToken(
-    apiKey,
-    isAzure || isAnthropic || isGoogle,
-  );
-
-  if (bearerToken) {
-    headers[authHeader] = bearerToken;
-  } else if (isEnabledAccessControl && validString(accessStore.accessCode)) {
-    headers["Authorization"] = getBearerToken(
-      ACCESS_CODE_PREFIX + accessStore.accessCode,
-    );
-  }
+  headers["Authorization"] = getBearerToken(apiKey);
 
   return headers;
 }
 
 export function getClientApi(provider: ServiceProvider): ClientApi {
-  switch (provider) {
-    case ServiceProvider.Google:
-      return new ClientApi(ModelProvider.GeminiPro);
-    case ServiceProvider.Anthropic:
-      return new ClientApi(ModelProvider.Claude);
-    case ServiceProvider.Baidu:
-      return new ClientApi(ModelProvider.Ernie);
-    case ServiceProvider.ByteDance:
-      return new ClientApi(ModelProvider.Doubao);
-    case ServiceProvider.Alibaba:
-      return new ClientApi(ModelProvider.Qwen);
-    case ServiceProvider.Tencent:
-      return new ClientApi(ModelProvider.Hunyuan);
-    case ServiceProvider.Moonshot:
-      return new ClientApi(ModelProvider.Moonshot);
-    case ServiceProvider.Iflytek:
-      return new ClientApi(ModelProvider.Iflytek);
-    case ServiceProvider.XAI:
-      return new ClientApi(ModelProvider.XAI);
-    case ServiceProvider.ChatGLM:
-      return new ClientApi(ModelProvider.ChatGLM);
-    default:
-      return new ClientApi(ModelProvider.GPT);
-  }
+  return new ClientApi(ModelProvider.GPT);
 }
