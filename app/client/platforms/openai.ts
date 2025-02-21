@@ -85,22 +85,11 @@ export class ChatGPTApi implements LLMApi {
   path(path: string): string {
     const accessStore = useAccessStore.getState();
 
-    let baseUrl = "";
-
-    const isAzure = path.includes("deployments");
-    if (accessStore.useCustomConfig) {
-      if (isAzure && !accessStore.isValidAzure()) {
-        throw Error(
-          "incomplete azure config, please check it in your settings page",
-        );
-      }
-
-      baseUrl = isAzure ? accessStore.azureUrl : accessStore.openaiUrl;
-    }
+    let baseUrl = accessStore.openaiUrl;
 
     if (baseUrl.length === 0) {
       const isApp = !!getClientConfig()?.isApp;
-      const apiPath = isAzure ? ApiPath.Azure : ApiPath.OpenAI;
+      const apiPath = ApiPath.OpenAI;
       baseUrl = isApp ? OPENAI_BASE_URL : apiPath;
     }
 
@@ -109,7 +98,6 @@ export class ChatGPTApi implements LLMApi {
     }
     if (
       !baseUrl.startsWith("http") &&
-      !isAzure &&
       !baseUrl.startsWith(ApiPath.OpenAI)
     ) {
       baseUrl = "https://" + baseUrl;
@@ -255,37 +243,10 @@ export class ChatGPTApi implements LLMApi {
     options.onController?.(controller);
 
     try {
-      let chatPath = "";
-      if (modelConfig.providerName === ServiceProvider.Azure) {
-        // find model, and get displayName as deployName
-        const { models: configModels, customModels: configCustomModels } =
-          useAppConfig.getState();
-        const {
-          defaultModel,
-          customModels: accessCustomModels,
-          useCustomConfig,
-        } = useAccessStore.getState();
-        const models = collectModelsWithDefaultModel(
-          configModels,
-          [configCustomModels, accessCustomModels].join(","),
-          defaultModel,
-        );
-        const model = models.find(
-          (model) =>
-            model.name === modelConfig.model &&
-            model?.provider?.providerName === ServiceProvider.Azure,
-        );
-        chatPath = this.path(
-          (isDalle3 ? Azure.ImagePath : Azure.ChatPath)(
-            (model?.displayName ?? model?.name) as string,
-            useCustomConfig ? useAccessStore.getState().azureApiVersion : "",
-          ),
-        );
-      } else {
-        chatPath = this.path(
+      let chatPath = this.path(
           isDalle3 ? OpenaiPath.ImagePath : OpenaiPath.ChatPath,
         );
-      }
+
       if (shouldStream) {
         let index = -1;
         let isInThinking = false;
@@ -293,7 +254,7 @@ export class ChatGPTApi implements LLMApi {
         const [tools, funcs] = usePluginStore
           .getState()
           .getAsTools(session.mask?.plugin || []);
-
+        console.log('tools', tools);
         stream(
           chatPath,
           requestPayload,
