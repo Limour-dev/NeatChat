@@ -1641,6 +1641,21 @@ export function Settings() {
               }
             />
           </ListItem>
+
+          <ListItem
+            title={Locale.Settings.EnablePlugins.Title}
+            subTitle={Locale.Settings.EnablePlugins.SubTitle}
+          >
+            <input
+              type="checkbox"
+              checked={config.enablePlugins}
+              onChange={(e) =>
+                updateConfig(
+                  (config) => (config.enablePlugins = e.currentTarget.checked),
+                )
+              }
+            />
+          </ListItem>
         </List>
 
         <SyncItems />

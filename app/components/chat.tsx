@@ -650,7 +650,7 @@ export function ChatActions(props: {
                   providerName as ServiceProvider;
                 session.mask.syncGlobalConfig = false;
                 // 如果切换到非 gemini-2.0-flash-exp 模型，清除插件选择
-                if (model !== "gemini-2.0-flash-exp") {
+                if (false || model !== "gemini-2.0-flash-exp") {
                   session.mask.plugin = [];
                 }
               });
@@ -744,13 +744,13 @@ export function ChatActions(props: {
           />
         )}
 
-        {showPlugins(currentProviderName, currentModel) && (
+        {config.enablePlugins && (
           <ChatAction
             onClick={() => {
-              if (currentModel === "gemini-2.0-flash-exp") {
-                setShowPluginSelector(true);
-              } else {
+              if (pluginStore.getAll().length == 0) {
                 navigate(Path.Plugins);
+              } else {
+                setShowPluginSelector(true);
               }
             }}
             text={Locale.Plugin.Name}

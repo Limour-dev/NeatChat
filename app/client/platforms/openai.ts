@@ -290,38 +290,15 @@ export class ChatGPTApi implements LLMApi {
         let index = -1;
         let isInThinking = false;
         const session = useChatStore.getState().currentSession();
-        const [_, funcs] = usePluginStore
+        const [tools, funcs] = usePluginStore
           .getState()
           .getAsTools(session.mask?.plugin || []);
 
-        // 添加联网状态日志
-        console.log(
-          "[Chat] Web Access:",
-          session.mask?.plugin?.includes("googleSearch")
-            ? "Enabled"
-            : "Disabled",
-        );
-
-        // 只有当用户选择了 googleSearch 时才创建 tools
-        const tools = session.mask?.plugin?.includes("googleSearch")
-          ? [
-              {
-                type: "function",
-                function: {
-                  name: "googleSearch",
-                },
-              },
-            ]
-          : undefined;
-
         stream(
           chatPath,
-          {
-            ...requestPayload,
-            ...(tools ? { tools } : {}),
-          },
+          requestPayload,
           getHeaders(),
-          tools || [], // 如果 tools 未定义，传入空数组
+          tools as any,
           funcs,
           controller,
           // parseSSE
