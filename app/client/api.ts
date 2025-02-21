@@ -193,7 +193,11 @@ export function getHeaders(ignoreHeaders: boolean = false) {
 
   const apiKey = accessStore.openaiApiKey;
 
-  headers["Authorization"] = getBearerToken(apiKey);
+  const bearerToken = getBearerToken(apiKey);
+
+  if (bearerToken) {
+    headers["Authorization"] = bearerToken;
+  }
 
   return headers;
 }
