@@ -85,11 +85,22 @@ export class ChatGPTApi implements LLMApi {
   path(path: string): string {
     const accessStore = useAccessStore.getState();
 
-    let baseUrl = accessStore.openaiUrl;
+    let baseUrl = "";
+
+    const isAzure = path.includes("deployments");
+    if (accessStore.useCustomConfig) {
+      if (isAzure && !accessStore.isValidAzure()) {
+        throw Error(
+          "incomplete azure config, please check it in your settings page",
+        );
+      }
+
+      baseUrl = isAzure ? accessStore.azureUrl : accessStore.openaiUrl;
+    }
 
     if (baseUrl.length === 0) {
       const isApp = !!getClientConfig()?.isApp;
-      const apiPath = ApiPath.OpenAI;
+      const apiPath = isAzure ? ApiPath.Azure : ApiPath.OpenAI;
       baseUrl = isApp ? OPENAI_BASE_URL : apiPath;
     }
 
@@ -98,6 +109,7 @@ export class ChatGPTApi implements LLMApi {
     }
     if (
       !baseUrl.startsWith("http") &&
+      !isAzure &&
       !baseUrl.startsWith(ApiPath.OpenAI)
     ) {
       baseUrl = "https://" + baseUrl;
@@ -243,23 +255,83 @@ export class ChatGPTApi implements LLMApi {
     options.onController?.(controller);
 
     try {
-      let chatPath = this.path(
+      let chatPath = "";
+      if (modelConfig.providerName === ServiceProvider.Azure) {
+        // find model, and get displayName as deployName
+        const { models: configModels, customModels: configCustomModels } =
+          useAppConfig.getState();
+        const {
+          defaultModel,
+          customModels: accessCustomModels,
+          useCustomConfig,
+        } = useAccessStore.getState();
+        const models = collectModelsWithDefaultModel(
+          configModels,
+          [configCustomModels, accessCustomModels].join(","),
+          defaultModel,
+        );
+        const model = models.find(
+          (model) =>
+            model.name === modelConfig.model &&
+            model?.provider?.providerName === ServiceProvider.Azure,
+        );
+        chatPath = this.path(
+          (isDalle3 ? Azure.ImagePath : Azure.ChatPath)(
+            (model?.displayName ?? model?.name) as string,
+            useCustomConfig ? useAccessStore.getState().azureApiVersion : "",
+          ),
+        );
+      } else {
+        chatPath = this.path(
           isDalle3 ? OpenaiPath.ImagePath : OpenaiPath.ChatPath,
         );
-
+      }
       if (shouldStream) {
         let index = -1;
         let isInThinking = false;
         const session = useChatStore.getState().currentSession();
-        const [tools, funcs] = usePluginStore
+
+        // 获取所有插件工具
+        const [allTools, funcs] = usePluginStore
           .getState()
           .getAsTools(session.mask?.plugin || []);
-        console.log('tools', tools);
+
+        // 添加联网状态日志
+        console.log(
+          "[Chat] Web Access:",
+          session.mask?.plugin?.includes("googleSearch")
+            ? "Enabled"
+            : "Disabled",
+        );
+
+        // 特殊处理gemini模型的联网功能
+        // 如果是gemini-2.0-flash-exp且用户选择了googleSearch，使用特定的tools
+        // 否则使用常规插件tools
+        const useGoogleSearch = session.mask?.plugin?.includes("googleSearch");
+        const isGeminiFlash = modelConfig.model === "gemini-2.0-flash-exp";
+
+        const tools =
+          isGeminiFlash && useGoogleSearch
+            ? [
+                {
+                  type: "function",
+                  function: {
+                    name: "googleSearch",
+                  },
+                },
+              ]
+            : Array.isArray(allTools)
+            ? allTools
+            : [];
+
         stream(
           chatPath,
-          requestPayload,
+          {
+            ...requestPayload,
+            ...(Array.isArray(tools) && tools.length > 0 ? { tools } : {}),
+          },
           getHeaders(),
-          tools as any,
+          Array.isArray(tools) ? tools : [],
           funcs,
           controller,
           // parseSSE
@@ -302,8 +374,8 @@ export class ChatGPTApi implements LLMApi {
               } else {
                 return reasoning;
               }
-            } 
-            
+            }
+
             if (content && content.length > 0) {
               if (isInThinking) {
                 isInThinking = false;

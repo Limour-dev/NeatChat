@@ -1,3 +1,5 @@
+#zip
+*.zip
 # Logs
 logs
 *.log
@@ -97,3 +99,4 @@ Thumbs.db
 *.key.pub
 
 build.sh
+cicd.sh

@@ -9,7 +9,7 @@
   },
   "package": {
     "productName": "NeatChat",
-    "version": "1.1.10"
+    "version": "1.2.0"
   },
   "tauri": {
     "allowlist": {
@@ -95,7 +95,7 @@
       "dangerousUseHttpScheme": true
     },
     "updater": {
-      "active": false,
+      "active": true,
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDc5MjZBQkIwNUI0Q0U1N0IKUldSNzVVeGJzS3NtZWRaOGtodjMzS2tsNkVKUUt0NTRKaHp4SDYxVXo1R3RqancvcGFyUTNTZmQK"
     },
     "windows": [

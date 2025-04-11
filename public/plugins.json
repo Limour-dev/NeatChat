@@ -18,5 +18,10 @@
     "id": "qdrant",
     "name": "Qdrant",
     "schema": "/plugins/qdrant.json"
+  },
+  {
+    "id": "jinaurl",
+    "name": "JinaURLContentReader",
+    "schema": "/plugins/jinaurl.json"
   }
 ]
