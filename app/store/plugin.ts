@@ -235,6 +235,7 @@ export const usePluginStore = createPersistStore(
       if (typeof window === "undefined") {
         return;
       }
+	  // @ts-ignore
       return () => {
         fetch("./plugins.json")
           .then((res) => res.json())
