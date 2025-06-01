@@ -19,7 +19,7 @@ import { useChatStore } from "../store";
 
 import { useAppConfig } from "../store/config";
 import { FileAttachment } from "./file-attachment";
-import { encode } from "../utils/token";
+import { estimateTokenLengthInLLM } from "../utils/token";
 
 function Details(props: { children: React.ReactNode }) {
   return <details open>{props.children}</details>;
@@ -697,8 +697,7 @@ export function Markdown(
 
     try {
       // 只计算token数量，不计算速度
-      const tokens = encode(props.content);
-      const tokenCount = tokens.length;
+      const tokenCount = estimateTokenLengthInLLM(props.content);
 
       // 更新内容长度
       contentLengthRef.current = props.content.length;
