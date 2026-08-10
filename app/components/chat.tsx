@@ -35,7 +35,6 @@ import SizeIcon from "../icons/size.svg";
 import QualityIcon from "../icons/hd.svg";
 import StyleIcon from "../icons/palette.svg";
 import ShortcutkeyIcon from "../icons/shortcutkey.svg";
-import ReloadIcon from "../icons/reload.svg";
 import {
   ChatMessage,
   SubmitKey,
@@ -120,20 +119,6 @@ export function SessionConfigModel(props: { onClose: () => void }) {
         onClose={() => props.onClose()}
         actions={[
           <IconButton
-            key="reset"
-            icon={<ResetIcon />}
-            bordered
-            text={Locale.Chat.Config.Reset}
-            onClick={async () => {
-              if (await showConfirm(Locale.Memory.ResetConfirm)) {
-                chatStore.updateTargetSession(
-                  session,
-                  (session) => (session.memoryPrompt = ""),
-                );
-              }
-            }}
-          />,
-          <IconButton
             key="copy"
             icon={<CopyIcon />}
             bordered
@@ -158,17 +143,6 @@ export function SessionConfigModel(props: { onClose: () => void }) {
             );
           }}
           shouldSyncFromGlobal
-          extraListItems={
-            session.mask.modelConfig.sendMemory ? (
-              <ListItem
-                className="copyable"
-                title={`${Locale.Memory.Title} (${session.lastSummarizeIndex} of ${session.messages.length})`}
-                subTitle={session.memoryPrompt || Locale.Memory.EmptyContent}
-              ></ListItem>
-            ) : (
-              <></>
-            )
-          }
         ></MaskConfig>
       </Modal>
     </div>
@@ -578,7 +552,6 @@ export function ChatActions(props: {
                   session.clearContextIndex = undefined;
                 } else {
                   session.clearContextIndex = session.messages.length;
-                  session.memoryPrompt = ""; // will clear memory
                 }
               });
             }}
@@ -1512,17 +1485,6 @@ function _Chat() {
           </div>
         </div>
         <div className="window-actions">
-          <div className="window-action-button">
-            <IconButton
-              icon={<ReloadIcon />}
-              bordered
-              title={Locale.Chat.Actions.RefreshTitle}
-              onClick={() => {
-                showToast(Locale.Chat.Actions.RefreshToast);
-                chatStore.summarizeSession(true, session);
-              }}
-            />
-          </div>
           {!isMobileScreen && (
             <div className="window-action-button">
               <IconButton

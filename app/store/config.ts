@@ -35,12 +35,6 @@ export type ModelConfig = {
   max_tokens: number;
   presence_penalty: number;
   frequency_penalty: number;
-  sendMemory: boolean;
-  historyMessageCount: number;
-  compressMessageLengthThreshold: number;
-  compressModel: string;
-  compressProviderName: string;
-  enableInjectSystemPrompts: boolean;
   template: string;
   size: DalleSize;
   quality: DalleQuality;
@@ -55,7 +49,6 @@ export type AppConfig = {
   fontFamily: string;
   theme: Theme;
   sendPreviewBubble: boolean;
-  enableAutoGenerateTitle: boolean;
   sidebarWidth: number;
   enableArtifacts: boolean;
   enableCodeFold: boolean;
@@ -80,7 +73,6 @@ export const DEFAULT_CONFIG: AppConfig = {
   fontFamily: "",
   theme: Theme.Auto,
   sendPreviewBubble: true,
-  enableAutoGenerateTitle: true,
   sidebarWidth: DEFAULT_SIDEBAR_WIDTH,
   enableArtifacts: true,
   enableCodeFold: true,
@@ -95,12 +87,6 @@ export const DEFAULT_CONFIG: AppConfig = {
     max_tokens: 10000,
     presence_penalty: 0,
     frequency_penalty: 0,
-    sendMemory: true,
-    historyMessageCount: 4,
-    compressMessageLengthThreshold: 1000,
-    compressModel: "",
-    compressProviderName: "",
-    enableInjectSystemPrompts: true,
     template: config?.template ?? DEFAULT_INPUT_TEMPLATE,
     size: "1024x1024" as DalleSize,
     quality: "standard" as DalleQuality,
@@ -197,9 +183,6 @@ export const useAppConfig = createPersistStore(
       const state = persistedState as ChatConfig;
 
       if (version < 3.4) {
-        state.modelConfig.sendMemory = true;
-        state.modelConfig.historyMessageCount = 4;
-        state.modelConfig.compressMessageLengthThreshold = 1000;
         state.modelConfig.frequency_penalty = 0;
         state.modelConfig.template = DEFAULT_INPUT_TEMPLATE;
         state.dontShowMaskSplashScreen = false;
@@ -210,13 +193,6 @@ export const useAppConfig = createPersistStore(
         state.customModels = "ChatGPT@OpenAI";
       }
 
-      if (version < 3.6) {
-        state.modelConfig.enableInjectSystemPrompts = true;
-      }
-
-      if (version < 3.7) {
-        state.enableAutoGenerateTitle = true;
-      }
 
       if (version < 3.8) {
         state.lastUpdate = Date.now();
@@ -229,12 +205,6 @@ export const useAppConfig = createPersistStore(
             : config?.template ?? DEFAULT_INPUT_TEMPLATE;
       }
 
-      if (version < 4.1) {
-        state.modelConfig.compressModel =
-          DEFAULT_CONFIG.modelConfig.compressModel;
-        state.modelConfig.compressProviderName =
-          DEFAULT_CONFIG.modelConfig.compressProviderName;
-      }
 
       if (version < 4.2) {
         state.modelConfig.max_tokens = 10000;

@@ -31,7 +31,6 @@ const en: LocaleType = {
     },
     Actions: {
       ChatList: "Go To Chat List",
-      CompressedHistory: "Compressed History Memory Prompt",
       Export: "Export All Messages as Markdown",
       Copy: "Copy",
       Stop: "Stop",
@@ -42,8 +41,6 @@ const en: LocaleType = {
       Delete: "Delete",
       Edit: "Edit",
       FullScreen: "FullScreen",
-      RefreshTitle: "Refresh Title",
-      RefreshToast: "Title refresh request sent",
     },
     Commands: {
       new: "Start a new chat",
@@ -133,15 +130,6 @@ const en: LocaleType = {
     Latest: "Select Latest",
     Clear: "Clear",
   },
-  Memory: {
-    Title: "Memory Prompt",
-    EmptyContent: "Nothing yet.",
-    Send: "Send Memory",
-    Copy: "Copy Memory",
-    Reset: "Reset Session",
-    ResetConfirm:
-      "Resetting will clear the current conversation history and historical memory. Are you sure you want to reset?",
-  },
   Home: {
     NewChat: "New Chat",
     DeleteChat: "Confirm to delete the selected conversation?",
@@ -180,10 +168,6 @@ const en: LocaleType = {
         "Font Family of the chat content, leave empty to apply global default font",
       Placeholder: "Font Family Name",
     },
-    InjectSystemPrompts: {
-      Title: "Inject System Prompts",
-      SubTitle: "Inject a global system prompt for every request",
-    },
     InputTemplate: {
       Title: "Input Template",
       SubTitle: "Newest message will be filled to this template",
@@ -206,10 +190,7 @@ const en: LocaleType = {
       Title: "Send Preview Bubble",
       SubTitle: "Preview markdown in bubble",
     },
-    AutoGenerateTitle: {
-      Title: "Auto Generate Title",
-      SubTitle: "Generate a suitable title based on the conversation content",
-    },
+
     Sync: {
       LocalState: "Local Data",
       Overview: (overview: any) => {
@@ -244,15 +225,6 @@ const en: LocaleType = {
       EditModal: {
         Title: "Edit Prompt",
       },
-    },
-    HistoryCount: {
-      Title: "Attached Messages Count",
-      SubTitle: "Number of sent messages attached per request",
-    },
-    CompressThreshold: {
-      Title: "History Compression Threshold",
-      SubTitle:
-        "Will compress if uncompressed messages length exceeds the value",
     },
 
     Usage: {
@@ -379,10 +351,6 @@ const en: LocaleType = {
     },
 
     Model: "Model",
-    CompressModel: {
-      Title: "Summary Model",
-      SubTitle: "Model used to compress history and generate title",
-    },
     MaxTokens: {
       Title: "Max Tokens",
       SubTitle: "Maximum length of input tokens and generated tokens",
@@ -422,14 +390,6 @@ const en: LocaleType = {
     DefaultTopic: "New Conversation",
     BotHello: "Hello! How can I assist you today?",
     Error: "Something went wrong, please try again later.",
-    Prompt: {
-      History: (content: string) =>
-        "This is a summary of the chat history as a recap: " + content,
-      Topic:
-        "Please generate a four to five word title summarizing our conversation without any lead-in, punctuation, quotation marks, periods, symbols, bold text, or additional text. Remove enclosing quotation marks.",
-      Summarize:
-        "Summarize the discussion briefly in 200 words or less to use as a prompt for future context.",
-    },
   },
   Copy: {
     Success: "Copied to clipboard",

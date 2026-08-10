@@ -29,7 +29,6 @@ const cn = {
     },
     Actions: {
       ChatList: "查看消息列表",
-      CompressedHistory: "查看压缩后的历史 Prompt",
       Export: "导出聊天记录",
       Copy: "复制",
       Stop: "停止",
@@ -40,8 +39,6 @@ const cn = {
       Delete: "删除",
       Edit: "编辑",
       FullScreen: "全屏",
-      RefreshTitle: "刷新标题",
-      RefreshToast: "已发送刷新标题请求",
     },
     Commands: {
       new: "新建聊天",
@@ -131,14 +128,6 @@ const cn = {
     Latest: "最近几条",
     Clear: "清除选中",
   },
-  Memory: {
-    Title: "历史摘要",
-    EmptyContent: "对话内容过短，无需总结",
-    Send: "自动压缩聊天记录并作为上下文发送",
-    Copy: "复制摘要",
-    Reset: "[unused]",
-    ResetConfirm: "确认清空历史摘要？",
-  },
   Home: {
     NewChat: "新的聊天",
     DeleteChat: "确认删除选中的对话？",
@@ -177,10 +166,6 @@ const cn = {
       SubTitle: "聊天内容的字体，若置空则应用全局默认字体",
       Placeholder: "字体名称",
     },
-    InjectSystemPrompts: {
-      Title: "注入系统级提示信息",
-      SubTitle: "强制给每次请求的消息列表开头添加一个模拟 ChatGPT 的系统提示",
-    },
     InputTemplate: {
       Title: "用户输入预处理",
       SubTitle: "用户最新的一条消息会填充到此模板",
@@ -203,10 +188,7 @@ const cn = {
       Title: "预览气泡",
       SubTitle: "在预览气泡中预览 Markdown 内容",
     },
-    AutoGenerateTitle: {
-      Title: "自动生成标题",
-      SubTitle: "根据对话内容生成合适的标题",
-    },
+
     Sync: {
       LocalState: "本地数据",
       Overview: (overview: any) => {
@@ -242,14 +224,6 @@ const cn = {
       EditModal: {
         Title: "编辑提示词",
       },
-    },
-    HistoryCount: {
-      Title: "附带历史消息数",
-      SubTitle: "每次请求携带的历史消息数",
-    },
-    CompressThreshold: {
-      Title: "历史消息长度压缩阈值",
-      SubTitle: "当未压缩的历史消息超过该值时，将进行压缩",
     },
 
     Usage: {
@@ -376,10 +350,6 @@ const cn = {
     },
 
     Model: "模型 (model)",
-    CompressModel: {
-      Title: "对话摘要模型",
-      SubTitle: "用于压缩历史记录、生成对话标题的模型",
-    },
     MaxTokens: {
       Title: "单次回复限制 (max_tokens)",
       SubTitle: "单次交互所用的最大 Token 数",
@@ -415,13 +385,6 @@ const cn = {
     DefaultTopic: "新的聊天",
     BotHello: "有什么可以帮你的吗",
     Error: "出错了，稍后重试吧",
-    Prompt: {
-      History: (content: string) => "这是历史聊天总结作为前情提要：" + content,
-      Topic:
-        '使用四到五个字直接返回这句话的简要主题，不要解释、不要标点、不要语气词、不要多余文本，不要加粗，如果没有主题，请直接返回"闲聊"',
-      Summarize:
-        "简要总结一下对话内容，用作后续的上下文提示 prompt，控制在 200 字以内",
-    },
   },
   Copy: {
     Success: "已写入剪贴板",
