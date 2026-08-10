@@ -35,10 +35,8 @@ import RobotIcon from "../icons/robot.svg";
 import SizeIcon from "../icons/size.svg";
 import QualityIcon from "../icons/hd.svg";
 import StyleIcon from "../icons/palette.svg";
-import PluginIcon from "../icons/plugin.svg";
 import ShortcutkeyIcon from "../icons/shortcutkey.svg";
 import ReloadIcon from "../icons/reload.svg";
-import McpToolIcon from "../icons/tool.svg";
 import {
   ChatMessage,
   SubmitKey,
@@ -50,7 +48,6 @@ import {
   useAppConfig,
   DEFAULT_TOPIC,
   ModelType,
-  usePluginStore,
 } from "../store";
 
 import {
@@ -62,7 +59,6 @@ import {
   getMessageImages,
   isVisionModel,
   isDalle3,
-  showPlugins,
   safeLocalStorage,
 } from "../utils";
 
@@ -86,7 +82,6 @@ import {
   showConfirm,
   showPrompt,
   showToast,
-  SimpleMultipleSelector,
 } from "./ui-lib";
 import { useNavigate } from "react-router-dom";
 import {
@@ -446,7 +441,6 @@ export function ChatActions(props: {
   const config = useAppConfig();
   const navigate = useNavigate();
   const chatStore = useChatStore();
-  const pluginStore = usePluginStore();
   const session = chatStore.currentSession();
 
   // switch themes
@@ -480,7 +474,6 @@ export function ChatActions(props: {
     return model?.displayName ?? "";
   }, [models, currentModel, currentProviderName]);
   const [showModelSelector, setShowModelSelector] = useState(false);
-  const [showPluginSelector, setShowPluginSelector] = useState(false);
   const [showUploadImage, setShowUploadImage] = useState(false);
 
   const [showSizeSelector, setShowSizeSelector] = useState(false);
@@ -621,10 +614,6 @@ export function ChatActions(props: {
                 session.mask.modelConfig.providerName =
                   providerName as ServiceProvider;
                 session.mask.syncGlobalConfig = false;
-                // 如果切换到非 gemini-2.0-flash-exp 模型，清除插件选择
-                if (model !== "gemini-2.0-flash-exp") {
-                  session.mask.plugin = [];
-                }
               });
               showToast(model);
             }}
@@ -716,47 +705,6 @@ export function ChatActions(props: {
           />
         )}
 
-        {showPlugins(currentProviderName, currentModel) && (
-          <ChatAction
-            onClick={() => {
-              if (currentModel === "gemini-2.0-flash-exp") {
-                setShowPluginSelector(true);
-              } else if (pluginStore.getAll().length === 0) {
-                navigate(Path.Plugins);
-              } else {
-                setShowPluginSelector(true);
-              }
-            }}
-            text={Locale.Plugin.Name}
-            icon={<PluginIcon />}
-          />
-        )}
-        {showPluginSelector && (
-          <SimpleMultipleSelector
-            items={[
-              ...(currentModel === "gemini-2.0-flash-exp"
-                ? [
-                    {
-                      title: Locale.Plugin.EnableWeb,
-                      value: "googleSearch",
-                    },
-                  ]
-                : []),
-              ...pluginStore.getAll().map((item) => ({
-                title: `${item?.title}@${item?.version}`,
-                value: item?.id,
-              })),
-            ]}
-            defaultSelectedValue={chatStore.currentSession().mask?.plugin}
-            onClose={() => setShowPluginSelector(false)}
-            onSelection={(s) => {
-              chatStore.updateTargetSession(session, (session) => {
-                session.mask.plugin = s;
-              });
-            }}
-            showSearch={false}
-          />
-        )}
 
         {!isMobileScreen && config.enableShortcuts && (
           <ChatAction
@@ -1520,32 +1468,6 @@ function _Chat() {
     setTouchEndX(0);
   };
 
-  const MCPAction = () => {
-    const [count, setCount] = useState<number>(0);
-    const [mcpEnabled, setMcpEnabled] = useState(false);
-
-    useEffect(() => {
-      const checkMcpStatus = async () => {
-        const enabled = await isMcpEnabled();
-        setMcpEnabled(enabled);
-        if (enabled) {
-          const count = await getAvailableClientsCount();
-          setCount(count);
-        }
-      };
-      checkMcpStatus();
-    }, []);
-
-    if (!mcpEnabled) return null;
-
-    return (
-      <ChatAction
-        onClick={() => navigate(Path.McpMarket)}
-        text={`MCP${count ? ` (${count})` : ""}`}
-        icon={<McpToolIcon />}
-      />
-    );
-  };
 
   // 在 _Chat 组件内添加图像编辑状态
   const [editingImage, setEditingImage] = useState<string | null>(null);

@@ -4,7 +4,6 @@ import {
   ServiceProvider,
 } from "../constant";
 import {
-  ChatMessageTool,
   ChatMessage,
   ModelType,
   useAccessStore,
@@ -53,8 +52,6 @@ export interface ChatOptions {
   onFinish: (message: string, responseRes: Response) => void;
   onError?: (err: Error) => void;
   onController?: (controller: AbortController) => void;
-  onBeforeTool?: (tool: ChatMessageTool) => void;
-  onAfterTool?: (tool: ChatMessageTool) => void;
 }
 
 export interface LLMUsage {

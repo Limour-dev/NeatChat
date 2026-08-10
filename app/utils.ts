@@ -266,10 +266,6 @@ export function isDalle3(model: string) {
   return "dall-e-3" === model;
 }
 
-export function showPlugins(providerName?: string, model?: string) {
-  // 让用户自己判断能不能用插件，基本都是能用的
-  return true;
-}
 
 export function fetch(
   url: string,
@@ -352,17 +348,6 @@ export function safeLocalStorage(): {
   };
 }
 
-export function getOperationId(operation: {
-  operationId?: string;
-  method: string;
-  path: string;
-}) {
-  // pattern '^[a-zA-Z0-9_-]+$'
-  return (
-    operation?.operationId ||
-    `${operation.method.toUpperCase()}${operation.path.replaceAll("/", "_")}`
-  );
-}
 
 // https://gist.github.com/iwill/a83038623ba4fef6abb9efca87ae9ccb
 export function semverCompare(a: string, b: string) {

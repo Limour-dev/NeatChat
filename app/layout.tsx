@@ -4,7 +4,6 @@ import "./styles/markdown.scss";
 import "./styles/highlight.scss";
 import { getClientConfig } from "./config/client";
 import type { Metadata, Viewport } from "next";
-import { McpInitializer } from "./components/mcp-initializer";
 
 
 // 添加字体优化
@@ -70,7 +69,6 @@ export default function RootLayout({
         </style>
       </head>
       <body suppressHydrationWarning={true}>
-        <McpInitializer />
         {children}
       </body>
     </html>

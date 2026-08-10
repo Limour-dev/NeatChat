@@ -421,10 +421,6 @@ const en: LocaleType = {
       Title: "Enable Clear Context",
       SubTitle: "Show clear context button in chat",
     },
-    EnablePlugins: {
-      Title: "Enable Plugins",
-      SubTitle: "Show plugins button in chat",
-    },
     EnableShortcuts: {
       Title: "Enable Shortcuts",
       SubTitle: "Show shortcuts button in chat",
@@ -461,62 +457,6 @@ const en: LocaleType = {
   Discovery: {
     Name: "Discovery",
   },
-  Mcp: {
-    Name: "MCP",
-    Market: {
-      Title: "MCP Market",
-      SubTitle: (count: number) => `${count} servers configured`,
-      Loading: "Loading preset server list...",
-      NoServers: "No servers available",
-      SearchPlaceholder: "Search MCP Server",
-      Status: {
-        Active: "Running",
-        Paused: "Stopped",
-        Error: "Error",
-        Initializing: "Initializing",
-        Undefined: "Undefined",
-      },
-      Actions: {
-        Add: "Add",
-        Configure: "Configure",
-        Start: "Start",
-        Stop: "Stop",
-        Tools: "Tools",
-        RestartAll: "Restart All",
-      },
-      Operations: {
-        Starting: "Starting server...",
-        Stopping: "Stopping server...",
-        Updating: "Updating configuration...",
-        Creating: "Creating MCP client...",
-      },
-      ConfigModal: {
-        Title: "Configure Server - ",
-        Save: "Save",
-        Cancel: "Cancel",
-        InputPlaceholder: "Enter {0}",
-        AddItem: "Add {0}",
-      },
-      ToolsModal: {
-        Title: "Server Details - ",
-        Close: "Close",
-        NoTools: "No tools available",
-        Loading: "Loading...",
-      },
-      Errors: {
-        LoadFailed: "Failed to load preset servers",
-        InitFailed: "Failed to load initial state",
-        SaveFailed: "Failed to save configuration",
-        StartFailed: "Failed to start server, please check logs",
-        StopFailed: "Failed to stop server",
-        ToolsLoadFailed: "Failed to load tools",
-        ConfigUpdateSuccess: "Server configuration updated successfully",
-        StopSuccess: "Server stopped successfully",
-        RestartSuccess: "Restarting all clients",
-        RestartFailed: "Failed to restart clients",
-      },
-    },
-  },
   FineTuned: {
     Sysmessage: "You are an assistant that",
   },
@@ -535,48 +475,7 @@ const en: LocaleType = {
       View: "View",
     },
   },
-  Plugin: {
-    Name: "Plugins",
-    EnableWeb: "Enable Web Access",
-    Page: {
-      Title: "Plugins",
-      SubTitle: (count: number) => `${count} plugins`,
-      Search: "Search Plugin",
-      Create: "Create",
-      Find: "You can find awesome plugins on github: ",
-    },
-    Item: {
-      Info: (count: number) => `${count} method`,
-      View: "View",
-      Edit: "Edit",
-      Delete: "Delete",
-      DeleteConfirm: "Confirm to delete?",
-    },
-    Auth: {
-      None: "None",
-      Basic: "Basic",
-      Bearer: "Bearer",
-      Custom: "Custom",
-      CustomHeader: "Parameter Name",
-      Token: "Token",
-      Proxy: "Using Proxy",
-      ProxyDescription: "Using proxies to solve CORS error",
-      Location: "Location",
-      LocationHeader: "Header",
-      LocationQuery: "Query",
-      LocationBody: "Body",
-    },
-    EditModal: {
-      Title: (readonly: boolean) =>
-        `Edit Plugin ${readonly ? "(readonly)" : ""}`,
-      Download: "Download",
-      Auth: "Authentication Type",
-      Content: "OpenAPI Schema",
-      Load: "Load From URL",
-      Method: "Method",
-      Error: "OpenAPI Schema Error",
-    },
-  },
+
   Mask: {
     Name: "Mask",
     Page: {
@@ -617,8 +516,7 @@ const en: LocaleType = {
       },
       CodeFold: {
         Title: "Enable CodeFold",
-        SubTitle:
-          "Automatically collapse/expand overly long code blocks when CodeFold is enabled",
+        SubTitle: "Automatically collapse/expand overly long code blocks when CodeFold is enabled",
       },
       Share: {
         Title: "Share This Mask",

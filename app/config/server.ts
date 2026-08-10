@@ -24,10 +24,7 @@ declare global {
 
       // custom template for preprocessing user input
       DEFAULT_INPUT_TEMPLATE?: string;
-
-      ENABLE_MCP?: string; // enable mcp functionality
     }
-  }
 }
 
 const ACCESS_CODES = (function getAccessCodes(): Set<string> {
@@ -116,6 +113,5 @@ export const getServerSideConfig = () => {
     disableFastLink: !!process.env.DISABLE_FAST_LINK,
     customModels,
     defaultModel,
-    enableMcp: process.env.ENABLE_MCP === "true",
   };
 };

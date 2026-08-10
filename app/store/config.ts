@@ -60,7 +60,6 @@ export type AppConfig = {
   enableThemeChange: boolean;
   enablePromptHints: boolean;
   enableClearContext: boolean;
-  enablePlugins: boolean;
   enableShortcuts: boolean;
 };
 
@@ -105,7 +104,6 @@ export const DEFAULT_CONFIG: AppConfig = {
   enableThemeChange: false,
   enablePromptHints: false,
   enableClearContext: true,
-  enablePlugins: false,
   enableShortcuts: false,
 };
 

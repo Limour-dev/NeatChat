@@ -7,11 +7,9 @@ import {
   REQUEST_TIMEOUT_MS,
 } from "@/app/constant";
 import {
-  ChatMessageTool,
   useAccessStore,
   useAppConfig,
   useChatStore,
-  usePluginStore,
 } from "@/app/store";
 import {
   preProcessImageContent,
@@ -167,7 +165,7 @@ export class ChatGPTApi implements LLMApi {
           messages.push({ role: v.role, content });
       }
 
-      // O1 not support image, tools (plugin in ChatGPTNextWeb) and system, stream, logprobs, temperature, top_p, n, presence_penalty, frequency_penalty yet.
+      // O1 not support image, tools and system, stream, logprobs, temperature, top_p, n, presence_penalty, frequency_penalty yet.
       requestPayload = {
         messages,
         stream: options.config.stream,
@@ -202,94 +200,29 @@ export class ChatGPTApi implements LLMApi {
         isDalle3 ? OpenaiPath.ImagePath : OpenaiPath.ChatPath,
       );
       if (shouldStream) {
-        let index = -1;
         let isInThinking = false;
-        const session = useChatStore.getState().currentSession();
-
-        // 获取所有插件工具
-        const [allTools, funcs] = usePluginStore
-          .getState()
-          .getAsTools(session.mask?.plugin || []);
-
-        // 添加联网状态日志
-        console.log(
-          "[Chat] Web Access:",
-          session.mask?.plugin?.includes("googleSearch")
-            ? "Enabled"
-            : "Disabled",
-        );
-
-        // 特殊处理gemini模型的联网功能
-        // 如果是gemini-2.0-flash-exp且用户选择了googleSearch，使用特定的tools
-        // 否则使用常规插件tools
-        const useGoogleSearch = session.mask?.plugin?.includes("googleSearch");
-        const isGeminiFlash = modelConfig.model === "gemini-2.0-flash-exp";
-
-        const tools =
-          isGeminiFlash && useGoogleSearch
-            ? [
-                {
-                  type: "function",
-                  function: {
-                    name: "googleSearch",
-                  },
-                },
-              ]
-            : Array.isArray(allTools)
-            ? allTools
-            : [];
 
         stream(
           chatPath,
-          {
-            ...requestPayload,
-            ...(Array.isArray(tools) && tools.length > 0 ? { tools } : {}),
-          },
+          requestPayload,
           getHeaders(),
-          Array.isArray(tools) ? tools : [],
-          funcs,
           controller,
           // parseSSE
-          (text: string, runTools: ChatMessageTool[]) => {
-            // console.log("parseSSE", text, runTools);
+          (text: string) => {
             const json = JSON.parse(text);
             const choices = json.choices as Array<{
               delta: {
                 content: string | undefined;
-                tool_calls: ChatMessageTool[];
                 reasoning_content: string | undefined;
               };
             }>;
-            const tool_calls = choices[0]?.delta?.tool_calls;
-            if (tool_calls?.length > 0) {
-              const id = tool_calls[0]?.id;
-              let args = tool_calls[0]?.function?.arguments;
-              // @ts-ignore
-              if (!(args.length > 0)) {
-                  args = "";
-              }
-              if (id) {
-                index += 1;
-                runTools.push({
-                  id,
-                  type: tool_calls[0]?.type,
-                  function: {
-                    name: tool_calls[0]?.function?.name as string,
-                    arguments: args,
-                  },
-                });
-              } else {
-                // @ts-ignore
-                runTools[index]["function"]["arguments"] += args;
-              }
-            }
             const reasoning = choices[0]?.delta?.reasoning_content;
             const content = choices[0]?.delta?.content;
 
             if (reasoning && reasoning.length > 0) {
               if (!isInThinking) {
                 isInThinking = true;
-                return "<think>\n" + reasoning;
+                return " thinking\n" + reasoning;
               } else {
                 return reasoning;
               }
@@ -298,29 +231,12 @@ export class ChatGPTApi implements LLMApi {
             if (content && content.length > 0) {
               if (isInThinking) {
                 isInThinking = false;
-                return "\n</think>\n\n" + content;
+                return "\n response\n\n" + content;
               } else {
                 return content;
               }
             }
             return choices[0]?.delta?.content;
-          },
-          // processToolMessage, include tool_calls message and tool call results
-          (
-            requestPayload: RequestPayload,
-            toolCallMessage: any,
-            toolCallResult: any[],
-          ) => {
-            // reset index value
-            index = -1;
-            // @ts-ignore
-            requestPayload?.messages?.splice(
-              // @ts-ignore
-              requestPayload?.messages?.length,
-              0,
-              toolCallMessage,
-              ...toolCallResult,
-            );
           },
           options,
         );
