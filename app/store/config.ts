@@ -10,7 +10,7 @@ import {
 } from "../constant";
 import { createPersistStore } from "../utils/store";
 
-export type ModelType = (typeof DEFAULT_MODELS)[number]["name"];
+export type ModelType = (typeof DEFAULT_MODELS)[number]["name"] | (string & {});
 
 export enum SubmitKey {
   Enter = "Enter",
@@ -94,7 +94,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   customModels: "",
   models: DEFAULT_MODELS as any as LLMModel[],
   modelConfig: {
-    model: "gpt-4o-mini" as ModelType,
+    model: "ChatGPT" as ModelType,
     providerName: "OpenAI" as ServiceProvider,
     temperature: 0.5,
     top_p: 1,
@@ -220,7 +220,7 @@ export const useAppConfig = createPersistStore(
       }
 
       if (version < 3.5) {
-        state.customModels = "claude,claude-100k";
+        state.customModels = "ChatGPT@OpenAI";
       }
 
       if (version < 3.6) {

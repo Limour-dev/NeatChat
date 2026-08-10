@@ -120,45 +120,20 @@ export const KnowledgeCutOffDate: Record<string, string> = {
   // it's now easier to add "KnowledgeCutOffDate" instead of stupid hardcoding it, as was done previously.
 };
 
-const openaiModels = [
-  "gpt-3.5-turbo",
-  "gpt-3.5-turbo-1106",
-  "gpt-3.5-turbo-0125",
-  "gpt-4",
-  "gpt-4-0613",
-  "gpt-4-32k",
-  "gpt-4-32k-0613",
-  "gpt-4-turbo",
-  "gpt-4-turbo-preview",
-  "gpt-4o",
-  "gpt-4o-2024-05-13",
-  "gpt-4o-2024-08-06",
-  "gpt-4o-2024-11-20",
-  "chatgpt-4o-latest",
-  "gpt-4o-mini",
-  "gpt-4o-mini-2024-07-18",
-  "gpt-4-vision-preview",
-  "gpt-4-turbo-2024-04-09",
-  "gpt-4-1106-preview",
-  "dall-e-3",
-  "o1-mini",
-  "o1-preview",
-];
-
-
+// 系统预设模型表：CUSTOM_MODELS 为空时，前端等效于 CUSTOM_MODELS=-all,+ChatGPT@OpenAI
 let seq = 1000; // 内置的模型序号生成器从1000开始
 export const DEFAULT_MODELS = [
-  ...openaiModels.map((name) => ({
-    name,
+  {
+    name: "ChatGPT",
     available: true,
     sorted: seq++, // Global sequence sort(index)
     provider: {
       id: "openai",
       providerName: "OpenAI",
       providerType: "openai",
-      sorted: 1, // 这里是固定的，确保顺序与之前内置的版本一致
+      sorted: 1,
     },
-  })),
+  },
 ] as const;
 
 export const CHAT_PAGE_SIZE = 15;
