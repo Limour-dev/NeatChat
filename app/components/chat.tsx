@@ -39,7 +39,6 @@ import {
   ChatMessage,
   SubmitKey,
   useChatStore,
-  BOT_HELLO,
   createMessage,
   useAccessStore,
   Theme,
@@ -47,7 +46,6 @@ import {
   DEFAULT_TOPIC,
   ModelType,
 } from "../store";
-
 import {
   copyToClipboard,
   selectOrCopy,
@@ -1133,16 +1131,6 @@ function _Chat() {
     return session.mask.hideContext ? [] : session.mask.context.slice();
   }, [session.mask.context, session.mask.hideContext]);
 
-  if (
-    context.length === 0 &&
-    session.messages.at(0)?.content !== BOT_HELLO.content
-  ) {
-    const copiedHello = Object.assign({}, BOT_HELLO);
-    if (!accessStore.isAuthorized()) {
-      copiedHello.content = Locale.Error.Unauthorized;
-    }
-    context.push(copiedHello);
-  }
 
   // preview messages
   const renderMessages = useMemo(() => {
