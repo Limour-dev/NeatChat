@@ -383,14 +383,6 @@ const en: LocaleType = {
       Title: "Summary Model",
       SubTitle: "Model used to compress history and generate title",
     },
-    Temperature: {
-      Title: "Temperature",
-      SubTitle: "A larger value makes the more random output",
-    },
-    TopP: {
-      Title: "Top P",
-      SubTitle: "Do not alter this value together with temperature",
-    },
     MaxTokens: {
       Title: "Max Tokens",
       SubTitle: "Maximum length of input tokens and generated tokens",

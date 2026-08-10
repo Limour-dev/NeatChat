@@ -51,7 +51,6 @@ export async function testModel(
       apiFormat === "anthropic-messages"
         ? {
             model: model,
-            max_tokens: 1,
             messages: [
               {
                 role: "user",
@@ -68,7 +67,6 @@ export async function testModel(
                 content: "Hello!",
               },
             ],
-            max_output_tokens: 1,
             stream: false,
           };
 

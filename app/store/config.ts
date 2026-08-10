@@ -32,8 +32,6 @@ const config = getClientConfig();
 export type ModelConfig = {
   model: ModelType;
   providerName: ServiceProvider;
-  temperature: number;
-  top_p: number;
   max_tokens: number;
   presence_penalty: number;
   frequency_penalty: number;
@@ -56,7 +54,6 @@ export type AppConfig = {
   fontSize: number;
   fontFamily: string;
   theme: Theme;
-  tightBorder: boolean;
   sendPreviewBubble: boolean;
   enableAutoGenerateTitle: boolean;
   sidebarWidth: number;
@@ -82,7 +79,6 @@ export const DEFAULT_CONFIG: AppConfig = {
   fontSize: 14,
   fontFamily: "",
   theme: Theme.Auto,
-  tightBorder: false,
   sendPreviewBubble: true,
   enableAutoGenerateTitle: true,
   sidebarWidth: DEFAULT_SIDEBAR_WIDTH,
@@ -96,9 +92,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   modelConfig: {
     model: "ChatGPT" as ModelType,
     providerName: "OpenAI" as ServiceProvider,
-    temperature: 0.5,
-    top_p: 1,
-    max_tokens: 4000,
+    max_tokens: 10000,
     presence_penalty: 0,
     frequency_penalty: 0,
     sendMemory: true,
@@ -139,19 +133,13 @@ export const ModalConfigValidator = {
     return x as ModelType;
   },
   max_tokens(x: number) {
-    return limitNumber(x, 0, 512000, 1024);
+    return limitNumber(x, 0, 512000, 10000);
   },
   presence_penalty(x: number) {
     return limitNumber(x, -2, 2, 0);
   },
   frequency_penalty(x: number) {
     return limitNumber(x, -2, 2, 0);
-  },
-  temperature(x: number) {
-    return limitNumber(x, 0, 2, 1);
-  },
-  top_p(x: number) {
-    return limitNumber(x, 0, 1, 1);
   },
 };
 
@@ -189,7 +177,7 @@ export const useAppConfig = createPersistStore(
   }),
   {
     name: StoreKey.Config,
-    version: 4.1,
+    version: 4.2,
 
     merge(persistedState, currentState) {
       const state = persistedState as ChatConfig | undefined;
@@ -213,7 +201,6 @@ export const useAppConfig = createPersistStore(
         state.modelConfig.historyMessageCount = 4;
         state.modelConfig.compressMessageLengthThreshold = 1000;
         state.modelConfig.frequency_penalty = 0;
-        state.modelConfig.top_p = 1;
         state.modelConfig.template = DEFAULT_INPUT_TEMPLATE;
         state.dontShowMaskSplashScreen = false;
         state.hideBuiltinMasks = false;
@@ -247,6 +234,10 @@ export const useAppConfig = createPersistStore(
           DEFAULT_CONFIG.modelConfig.compressModel;
         state.modelConfig.compressProviderName =
           DEFAULT_CONFIG.modelConfig.compressProviderName;
+      }
+
+      if (version < 4.2) {
+        state.modelConfig.max_tokens = 10000;
       }
 
       return state as any;

@@ -30,14 +30,12 @@ async function testModel(
       apiFormat === "anthropic-messages"
         ? {
             model,
-            max_tokens: 1,
             messages: [{ role: "user", content: "Hello!" }],
             stream: false,
           }
         : {
             model,
             input: [{ role: "user", content: "Hello!" }],
-            max_output_tokens: 1,
             stream: false,
           };
 

@@ -139,14 +139,13 @@ export function WindowContent(props: { children: React.ReactNode }) {
 }
 
 function Screen() {
-  const config = useAppConfig();
   const location = useLocation();
   const isArtifact = location.pathname.includes(Path.Artifacts);
   const isHome = location.pathname === Path.Home;
   const isAuth = location.pathname === Path.Auth;
 
   const isMobileScreen = useMobileScreen();
-  const shouldTightBorder = config.tightBorder && !isMobileScreen;
+  const shouldTightBorder = !isMobileScreen;
 
   useEffect(() => {
     loadAsyncGoogleFont();

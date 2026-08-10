@@ -34,7 +34,7 @@
 **解决方案：构建时跳过 lint**：
 
 ```bash
-npx next build --no-lint
+./node_modules/.bin/next build --no-lint
 ```
 
 > `npm run build`（= `npm run mask && next build`）会失败，不要直接用它。
@@ -49,7 +49,7 @@ Next.js 会自动加载 `.env`，但服务端代码中的 `process.env.X` 在**�
 
 ```bash
 rm -rf .next
-npx next build --no-lint
+./node_modules/.bin/next build --no-lint
 ```
 
 ### 验证配置是否生效
@@ -59,6 +59,45 @@ curl -s http://localhost:3000/api/config
 ```
 
 正常应返回 `customModels`、`apiFormat`、`baseUrl`、`apiKey` 等字段（apiKey 只返回"已设置"占位）。
+
+**判断是否需要重建（改 .env 后）**：比较时间戳，`.env` 比 `.next/BUILD_ID` 新则说明构建内联的是旧配置：
+
+```bash
+stat -c '%y' .env .next/BUILD_ID
+```
+
+**对比实际值**（防止"服务看着正常但配置已过期"）：
+
+```bash
+grep -E "^(API_FORMAT|BASE_URL|CUSTOM_MODELS|DEFAULT_MODEL)" .env
+curl -s http://localhost:3000/api/config
+```
+
+> 真实案例：旧构建返回 `apiFormat: "openai-responses"`，而 `.env` 已是 `API_FORMAT=anthropic-messages`，服务端与 .env 不一致 = 过期构建，必须重建。
+
+### 关键坑 5：`npx next` 被 pi-agent 的二进制遮蔽
+
+本机 `npx next` 会优先解析到 pi-agent 的 npx 缓存（`/home/limour/.npm/_npx/.../node_modules/.bin/next`，是一个 "rtk next" 包装器），**不是**项目本地的 `node_modules/.bin/next`（14.2.35）。该包装器不支持 `--no-lint`，会报：
+
+```
+error: unknown option '--no-lint'
+```
+
+**解决方案：构建/启动一律用项目本地二进制**：
+
+```bash
+./node_modules/.bin/next build --no-lint   # 构建（跳过 lint）
+./node_modules/.bin/next start -p 3000     # 启动
+```
+
+排查命令：
+
+```bash
+which -a next      # 第一个是 pi-agent 的缓存，不是本项目的
+ls -l node_modules/.bin/next   # 项目本地，指向 ../next/dist/bin/next
+```
+
+> Docker 构建在干净容器内执行，`npx next` 会正确解析到本地，不受此问题影响（但为统一也可写本地路径）。
 
 ## 启动
 
@@ -73,7 +112,7 @@ curl -s http://localhost:3000/api/config
 cd /home/limour/NeatChat
 export PORT=3000
 unset __NEXT_PRIVATE_ORIGIN
-nohup npx next start -p 3000 > /tmp/neatchat-server.log 2>&1 &
+nohup ./node_modules/.bin/next start -p 3000 > /tmp/neatchat-server.log 2>&1 &
 ```
 
 或写成脚本复用：
@@ -84,7 +123,7 @@ cat > /tmp/start-neatchat.sh << 'EOF'
 cd /home/limour/NeatChat
 export PORT=3000
 unset __NEXT_PRIVATE_ORIGIN
-exec npx next start -p 3000
+exec ./node_modules/.bin/next start -p 3000
 EOF
 chmod +x /tmp/start-neatchat.sh
 nohup /tmp/start-neatchat.sh > /tmp/neatchat-server.log 2>&1 &
@@ -110,7 +149,7 @@ node .next/standalone/server.js
 ### 关键坑 4：Dockerfile 构建命令必须跳过 lint
 
 原 Dockerfile 使用 `RUN npm run build`，会因 ESLint errors 构建失败。
-**已改为** `RUN npx next build --no-lint`（同本地构建一致）。
+**已改为** `RUN npx next build --no-lint`（同本地构建一致，Docker 内 `npx` 会正确解析到本地二进制）。
 
 ```dockerfile
 RUN npx next build --no-lint
@@ -124,6 +163,23 @@ docker compose up -d    # 浏览器访问 http://<服务器IP>:3000
 
 环境变量通过 `docker-compose.yml` 的 `environment:` 传入（如 `BASE_URL`、`CUSTOM_MODELS`、`DEFAULT_MODEL` 等），
 容器的 `HOSTNAME=0.0.0.0` 需设置，否则容器内默认监听 localhost 无法对外访问。
+## 重启速查（本机完整流程）
+
+```bash
+cd /home/limour/NeatChat
+# 0) 判断是否需重建：若 .env 比 .next/BUILD_ID 新，必须重建
+stat -c '%y' .env .next/BUILD_ID
+# 1) 停旧服务（pid 从 ss 查，别碰 30141 的 pi-agent）
+ss -tlnp | grep :3000
+kill <pid>
+# 2) 配置有变时重建（跳过 lint、用本地二进制）
+rm -rf .next
+./node_modules/.bin/next build --no-lint
+# 3) 启动（复用脚本，见"启动"一节）
+nohup /tmp/start-neatchat.sh > /tmp/neatchat-server.log 2>&1 &
+# 4) 验证
+curl -s http://localhost:3000/api/config
+```
 
 ## 端口速查
 

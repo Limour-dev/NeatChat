@@ -72,8 +72,6 @@ export interface AnthropicMessageRequestPayload {
   }[];
   max_tokens?: number;
   stream?: boolean;
-  temperature?: number;
-  top_p?: number;
 }
 
 export interface OpenAIResponsesRequestPayload {
@@ -84,9 +82,6 @@ export interface OpenAIResponsesRequestPayload {
     content: string | ResponsesContentBlock[];
   }[];
   stream?: boolean;
-  temperature?: number;
-  top_p?: number;
-  max_output_tokens?: number;
 }
 
 export interface DalleRequestPayload {
@@ -342,10 +337,8 @@ export class ChatGPTApi implements LLMApi {
         model: modelConfig.model,
         system: systemText || undefined,
         messages,
-        max_tokens: Math.max(modelConfig.max_tokens, 1024),
+        max_tokens: modelConfig.max_tokens,
         stream: options.config.stream,
-        temperature: modelConfig.temperature,
-        top_p: modelConfig.top_p,
       };
     } else {
       // openai-responses
@@ -378,9 +371,6 @@ export class ChatGPTApi implements LLMApi {
         instructions: instructions || undefined,
         input,
         stream: options.config.stream,
-        temperature: modelConfig.temperature,
-        top_p: modelConfig.top_p,
-        max_output_tokens: Math.max(modelConfig.max_tokens, 1024),
       };
     }
 
