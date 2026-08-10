@@ -176,8 +176,13 @@ export function stream(
   // data arrives (and at finish), so the response streams in progressively
   // instead of appearing all at once at the end. No requestAnimationFrame
   // dependency, which avoids throttling/pausing issues.
+  let _flushCount = 0;
   function flushText(chunk: string = "") {
     if (chunk) responseText += chunk;
+    _flushCount++;
+    if (_flushCount <= 3 || _flushCount % 50 === 0) {
+      console.debug("[flushText] #" + _flushCount + " chunkLen=" + chunk.length + " totalLen=" + responseText.length);
+    }
     if (finished || controller.signal.aborted) return;
     options.onUpdate?.(responseText, chunk);
   }

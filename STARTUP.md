@@ -131,6 +131,11 @@ nohup /tmp/start-neatchat.sh > /tmp/neatchat-server.log 2>&1 &
 
 启动成功后访问 **http://localhost:3000**。
 
+### 关键坑 7：dev 模式在本环境不可用
+
+`next dev` 因 `output: "standalone"` + `NODE_ENV=production`（pi-agent 环境残留）导致 SCSS 解析失败或编译卡死。
+**只能用 build + start 方式**。改代码后用 `./redeploy.sh` 一键重部署。
+
 ### 关于 standalone 模式
 
 `next.config.mjs` 配置了 `output: "standalone"`，`next start` 会打印警告：
@@ -181,22 +186,32 @@ ls .next/static/chunks/app/page-*.js                           # 磁盘上最新
 RUN npx next build --no-lint
 ## 重启速查（本机完整流程）
 
+**推荐：一键重部署脚本**（自动关 chrome、停服务、构建、启动、验证）：
+
+```bash
+./redeploy.sh
+```
+
+### 手动流程
+
 ```bash
 cd /home/limour/NeatChat
-# 0) 判断是否需重建：若 .env 比 .next/BUILD_ID 新，必须重建
+# 0) 关闭 chrome-use（否则重启服务时浏览器会卡死）
+chrome-use close
+# 1) 判断是否需重建：若 .env 比 .next/BUILD_ID 新，必须重建
 stat -c '%y' .env .next/BUILD_ID
-# 0.5) 判断运行版本是否过期：进程启动时间 < BUILD_ID 时间 = 旧版在跑，必须重启（坑 6）
+# 1.5) 判断运行版本是否过期：进程启动时间 < BUILD_ID 时间 = 旧版在跑，必须重启（坑 6）
 ss -tlnp | grep :3000                              # 拿 pid
 ps -p <pid> -o lstart= && stat -c '%y' .next/BUILD_ID
-# 1) 停旧服务（pid 从 ss 查，别碰 30141 的 pi-agent）
+# 2) 停旧服务（pid 从 ss 查，别碰 30141 的 pi-agent）
 ss -tlnp | grep :3000
 kill <pid>
-# 2) 配置有变时重建（跳过 lint、用本地二进制）
+# 3) 配置有变时重建（跳过 lint、用本地二进制）
 rm -rf .next
 ./node_modules/.bin/next build --no-lint
-# 3) 启动（复用脚本，见"启动"一节）——注意：即使磁盘 .next 已是最新构建，也必须重启进程才能加载
+# 4) 启动（复用脚本，见"启动"一节）——注意：即使磁盘 .next 已是最新构建，也必须重启进程才能加载
 nohup /tmp/start-neatchat.sh > /tmp/neatchat-server.log 2>&1 &
-# 4) 验证（确认新 pid 在监听后再 curl，旧进程可能未完全退出）
+# 5) 验证（确认新 pid 在监听后再 curl，旧进程可能未完全退出）
 ss -tlnp | grep :3000
 curl -s http://localhost:3000/api/config
 curl -s http://localhost:3000/ | grep -o 'app/page-[^"]*\.js'   # 与磁盘 chunk 对比

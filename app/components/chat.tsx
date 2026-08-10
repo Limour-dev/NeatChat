@@ -1176,6 +1176,7 @@ function ChatInner() {
     isLoading,
     session.messages,
     userInput,
+    chatStore.lastUpdateTime,
   ]);
 
   const [msgRenderIndex, _setMsgRenderIndex] = useState(
