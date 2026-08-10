@@ -144,6 +144,32 @@ node .next/standalone/server.js
 
 （需确保 `.next/static` 与 `public` 已复制到 standalone 目录，参考 Dockerfile runner 阶段。）
 
+### 关键坑 6：构建完成 ≠ 运行中的服务是新版本
+
+`next start` 在**进程启动时**加载模块并缓存，之后即使磁盘上的 `.next` 被新构建覆盖，**运行中的进程不会自动加载新代码**。构建完成 ≠ 服务已更新，必须重启进程才会加载新版本。
+
+**真实案例**：进程 00:31:55 启动 → 源码 00:47 修改 → 新构建 00:48:36 完成 → 提交 00:49:40。磁盘 `.next` 明明是最新构建（BUILD_ID 比所有源文件新），但页面加载的仍是旧 chunk（`page-5aa89be...`），`temperature` 参数等旧特征还在——因为进程 00:31 启动时缓存的是旧模块。
+
+**判断方法：比较进程启动时间与构建时间**：
+
+```bash
+ps -p <pid> -o lstart=          # 进程启动时间（pid 从 ss -tlnp | grep :3000 查）
+stat -c '%y' .next/BUILD_ID     # 构建完成时间
+```
+
+进程启动时间早于 BUILD_ID 时间 → 运行的是旧版本，必须重启。
+
+**验证方法：对比运行中加载的 chunk 与磁盘上的最新 chunk**：
+
+```bash
+curl -s http://localhost:3000/ | grep -o 'app/page-[^"]*\.js'  # 运行中加载的
+ls .next/static/chunks/app/page-*.js                           # 磁盘上最新的
+```
+
+两者文件名不一致 → 运行中的是旧构建。也可在页面 chunk 里 grep 新旧特征（新版无 `temperature`、`max_tokens||1e4`、无全屏按钮）。
+
+> 注意：重启后旧进程可能未完全退出，立即 curl 可能仍返回旧响应；确认新 pid 在监听后再验证。
+
 ## Docker 构建
 
 ### 关键坑 4：Dockerfile 构建命令必须跳过 lint
@@ -153,33 +179,29 @@ node .next/standalone/server.js
 
 ```dockerfile
 RUN npx next build --no-lint
-```
-
-### Docker 启动
-
-```bash
-docker compose up -d    # 浏览器访问 http://<服务器IP>:3000
-```
-
-环境变量通过 `docker-compose.yml` 的 `environment:` 传入（如 `BASE_URL`、`CUSTOM_MODELS`、`DEFAULT_MODEL` 等），
-容器的 `HOSTNAME=0.0.0.0` 需设置，否则容器内默认监听 localhost 无法对外访问。
 ## 重启速查（本机完整流程）
 
 ```bash
 cd /home/limour/NeatChat
 # 0) 判断是否需重建：若 .env 比 .next/BUILD_ID 新，必须重建
 stat -c '%y' .env .next/BUILD_ID
+# 0.5) 判断运行版本是否过期：进程启动时间 < BUILD_ID 时间 = 旧版在跑，必须重启（坑 6）
+ss -tlnp | grep :3000                              # 拿 pid
+ps -p <pid> -o lstart= && stat -c '%y' .next/BUILD_ID
 # 1) 停旧服务（pid 从 ss 查，别碰 30141 的 pi-agent）
 ss -tlnp | grep :3000
 kill <pid>
 # 2) 配置有变时重建（跳过 lint、用本地二进制）
 rm -rf .next
 ./node_modules/.bin/next build --no-lint
-# 3) 启动（复用脚本，见"启动"一节）
+# 3) 启动（复用脚本，见"启动"一节）——注意：即使磁盘 .next 已是最新构建，也必须重启进程才能加载
 nohup /tmp/start-neatchat.sh > /tmp/neatchat-server.log 2>&1 &
-# 4) 验证
+# 4) 验证（确认新 pid 在监听后再 curl，旧进程可能未完全退出）
+ss -tlnp | grep :3000
 curl -s http://localhost:3000/api/config
+curl -s http://localhost:3000/ | grep -o 'app/page-[^"]*\.js'   # 与磁盘 chunk 对比
 ```
+
 
 ## 端口速查
 
