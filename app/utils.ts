@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { showToast } from "./components/ui-lib";
 import Locale from "./locales";
 import { RequestMessage } from "./client/api";
-import { ServiceProvider } from "./constant";
 
 export async function copyToClipboard(text: string) {
   try {

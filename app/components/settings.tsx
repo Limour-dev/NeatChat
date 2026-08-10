@@ -12,7 +12,6 @@ import EditIcon from "../icons/edit.svg";
 import EyeIcon from "../icons/eye.svg";
 import DownloadIcon from "../icons/download.svg";
 import UploadIcon from "../icons/upload.svg";
-import ConfirmIcon from "../icons/confirm.svg";
 import {
   Input,
   List,
@@ -336,7 +335,6 @@ export function Settings() {
   }, [
     accessStore.hideBalanceQuery,
     accessStore.openaiUrl,
-    accessStore.provider,
   ]);
 
   const usage = {

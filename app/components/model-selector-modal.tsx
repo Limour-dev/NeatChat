@@ -171,7 +171,7 @@ export function ModelSelectorModal(props: {
     }
 
     return result;
-  }, [models, systemCategoryPatterns]);
+  }, [models]);
 
   // 修改初始化函数，确保加载自定义模型
   const fetchModels = async (forceRefresh = false) => {
@@ -413,6 +413,7 @@ export function ModelSelectorModal(props: {
 
   useEffect(() => {
     fetchModels(false); // 传入false表示优先从本地加载
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessStore.useCustomConfig]);
 
   const toggleModelSelection = (originalIndex: number) => {
@@ -667,7 +668,7 @@ export function ModelSelectorModal(props: {
         (selectedCategory === "all" ||
           getModelCategory(model.id) === selectedCategory),
     );
-  }, [models, searchKeyword, selectedCategory, getModelCategory]);
+  }, [models, searchKeyword, selectedCategory]);
 
   // 根据响应时间返回样式类
   const getResponseTimeClass = (responseTime: number) => {

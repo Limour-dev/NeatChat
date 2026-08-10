@@ -410,6 +410,7 @@ export function ChatActions(props: {
   setShowShortcutKeyModal: React.Dispatch<React.SetStateAction<boolean>>;
   setUserInput: (input: string) => void;
 }) {
+  const { setAttachImages, setUploading } = props;
   const config = useAppConfig();
   const navigate = useNavigate();
   const chatStore = useChatStore();
@@ -464,8 +465,8 @@ export function ChatActions(props: {
     const show = isVisionModel(currentModel);
     setShowUploadImage(show);
     if (!show) {
-      props.setAttachImages([]);
-      props.setUploading(false);
+      setAttachImages([]);
+      setUploading(false);
     }
 
     // if current model is not available
@@ -485,7 +486,7 @@ export function ChatActions(props: {
           : nextModel.name,
       );
     }
-  }, [chatStore, currentModel, models, session]);
+  }, [chatStore, currentModel, models, setAttachImages, setUploading, session]);
 
   const showModelSearchOption = config.enableModelSearch ?? false;
 
@@ -824,7 +825,7 @@ export function ShortcutKeyModal(props: { onClose: () => void }) {
   );
 }
 
-function _Chat() {
+function ChatInner() {
   type RenderMessage = ChatMessage & { preview?: boolean };
 
   const chatStore = useChatStore();
@@ -855,7 +856,7 @@ function _Chat() {
       scrollRef.current.getBoundingClientRect().top;
     // leave some space for user question
     return topDistance < 100;
-  }, [scrollRef?.current?.scrollHeight]);
+  }, []);
 
   const isTyping = userInput !== "";
 
@@ -1648,6 +1649,7 @@ function _Chat() {
                       </div>
 
                       <div className={styles["chat-message-item"]}>
+                        {/* eslint-disable @next/next/no-img-element */}
                         <Markdown
                           key={message.streaming ? "loading" : "done"}
                           content={getMessageTextContent(message)}
@@ -1702,6 +1704,7 @@ function _Chat() {
                             })}
                           </div>
                         )}
+                        {/* eslint-enable @next/next/no-img-element */}
                       </div>
 
                       {showActions && (
@@ -1925,5 +1928,5 @@ function _Chat() {
 export function Chat() {
   const chatStore = useChatStore();
   const session = chatStore.currentSession();
-  return <_Chat key={session.id}></_Chat>;
+  return <ChatInner key={session.id}></ChatInner>;
 }

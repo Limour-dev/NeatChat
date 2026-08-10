@@ -131,7 +131,7 @@ export function PreCode(props: { children: any }) {
       });
       setTimeout(renderArtifacts, 1);
     }
-  }, []);
+  }, [renderArtifacts]);
 
   return (
     <>
@@ -416,7 +416,7 @@ ${restText}`;
   return text;
 }
 
-function _MarkDownContent(props: { content: string }) {
+function MarkdownContentInner(props: { content: string }) {
   const escapedContent = useMemo(() => {
     // 尝试匹配完整的 JSON 字符串模式
       const jsonRegex = /(\{.*"type"\s*:\s*"base64_image".*?\})/;
@@ -521,7 +521,7 @@ function _MarkDownContent(props: { content: string }) {
   );
 }
 
-export const MarkdownContent = React.memo(_MarkDownContent);
+export const MarkdownContent = React.memo(MarkdownContentInner);
 
 export function Markdown(
   props: {

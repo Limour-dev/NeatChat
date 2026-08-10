@@ -26,16 +26,17 @@ export function ModelTestButton(props: {
   initialTimeout?: number;
   useServerTest?: boolean;
 }) {
+  const { onTimeoutChange } = props;
   const [testing, setTesting] = useState(false);
   const [timeout, setTimeout] = useState(props.initialTimeout || 5);
   const accessStore = useAccessStore();
   const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    if (props.onTimeoutChange) {
-      props.onTimeoutChange(timeout);
+    if (onTimeoutChange) {
+      onTimeoutChange(timeout);
     }
-  }, [timeout, props.onTimeoutChange]);
+  }, [timeout, onTimeoutChange]);
 
   const handleTest = async () => {
     // 如果正在测试中，则停止测试
