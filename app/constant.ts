@@ -81,7 +81,6 @@ export enum StoreKey {
 
 export const OpenaiPath = {
   ChatPath: "v1/chat/completions",
-  SpeechPath: "v1/audio/speech",
   ImagePath: "v1/images/generations",
   UsagePath: "dashboard/billing/usage",
   SubsPath: "dashboard/billing/subscription",
@@ -124,20 +123,6 @@ export const KnowledgeCutOffDate: Record<string, string> = {
   // After improvements,
   // it's now easier to add "KnowledgeCutOffDate" instead of stupid hardcoding it, as was done previously.
 };
-
-export const DEFAULT_TTS_ENGINE = "OpenAI-TTS";
-export const DEFAULT_TTS_ENGINES = ["OpenAI-TTS", "Edge-TTS"];
-export const DEFAULT_TTS_MODEL = "tts-1";
-export const DEFAULT_TTS_VOICE = "alloy";
-export const DEFAULT_TTS_MODELS = ["tts-1", "tts-1-hd"];
-export const DEFAULT_TTS_VOICES = [
-  "alloy",
-  "echo",
-  "fable",
-  "onyx",
-  "nova",
-  "shimmer",
-];
 
 const openaiModels = [
   "gpt-3.5-turbo",
@@ -183,18 +168,6 @@ export const DEFAULT_MODELS = [
 export const CHAT_PAGE_SIZE = 15;
 export const MAX_RENDER_MSG_COUNT = 45;
 
-// some famous webdav endpoints
-export const internalAllowedWebDavEndpoints = [
-  "https://dav.jianguoyun.com/dav/",
-  "https://dav.dropdav.com/",
-  "https://dav.box.com/dav",
-  "https://nanao.teracloud.jp/dav/",
-  "https://bora.teracloud.jp/dav/",
-  "https://webdav.4shared.com/",
-  "https://dav.idrivesync.com",
-  "https://webdav.yandex.com",
-  "https://app.koofr.net/dav/Koofr",
-];
 
 export const DEFAULT_GA_ID = "G-89WN60ZK2E";
 export const PLUGINS = [

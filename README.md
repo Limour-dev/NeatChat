@@ -37,8 +37,7 @@
 | Ollama       | `ollama`           | ComfyUI    | `comfyui`        |
 | VolcEngine   | `volcengine`       | VertexAI   | `vertexai`       |
 | SiliconCloud | `siliconcloud`     | Perplexity | `perplexity`     |
-| Stability    | `stability`        | Flux       | `flux`           |
-
+| Flux         | `flux`             |            |                  |
 1. **Docker 启动（推荐，唯一主推方式）**：镜像由 GitHub Actions（`.github/workflows/docker.yml`）自动构建并推送至 Docker Hub：`limour/next-chat`。新建 `docker-compose.yml`：
 
 ```yaml

@@ -33,9 +33,6 @@ const DEFAULT_ACCESS_STATE = {
   disableFastLink: false,
   customModels: "",
   defaultModel: "",
-
-  // tts config
-  edgeTTSVoiceName: "zh-CN-YunxiNeural",
 };
 
 export const useAccessStore = createPersistStore(
@@ -46,12 +43,6 @@ export const useAccessStore = createPersistStore(
       this.fetch();
 
       return get().needCode;
-    },
-
-    edgeVoiceName() {
-      this.fetch();
-
-      return get().edgeTTSVoiceName;
     },
 
     isValidOpenAI() {

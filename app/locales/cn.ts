@@ -42,8 +42,6 @@ const cn = {
       FullScreen: "全屏",
       RefreshTitle: "刷新标题",
       RefreshToast: "已发送刷新标题请求",
-      Speech: "朗读",
-      StopSpeech: "停止",
     },
     Commands: {
       new: "新建聊天",
@@ -210,42 +208,6 @@ const cn = {
       SubTitle: "根据对话内容生成合适的标题",
     },
     Sync: {
-      CloudState: "云端数据",
-      NotSyncYet: "还没有进行过同步",
-      Success: "同步成功",
-      Fail: "同步失败",
-
-      Config: {
-        Modal: {
-          Title: "配置云同步",
-          Check: "检查可用性",
-        },
-        SyncType: {
-          Title: "同步类型",
-          SubTitle: "选择喜爱的同步服务器",
-        },
-        Proxy: {
-          Title: "启用代理",
-          SubTitle: "在浏览器中同步时，必须启用代理以避免跨域限制",
-        },
-        ProxyUrl: {
-          Title: "代理地址",
-          SubTitle: "仅适用于本项目自带的跨域代理",
-        },
-
-        WebDav: {
-          Endpoint: "WebDAV 地址",
-          UserName: "用户名",
-          Password: "密码",
-        },
-
-        UpStash: {
-          Endpoint: "UpStash Redis REST Url",
-          UserName: "备份名称",
-          Password: "UpStash Redis REST Token",
-        },
-      },
-
       LocalState: "本地数据",
       Overview: (overview: any) => {
         return `${overview.chat} 次对话，${overview.message} 条消息，${overview.prompt} 条提示词，${overview.mask} 个面具`;
@@ -437,49 +399,6 @@ const cn = {
     FrequencyPenalty: {
       Title: "频率惩罚度 (frequency_penalty)",
       SubTitle: "值越大，越有可能降低重复字词",
-    },
-    TTS: {
-      Enable: {
-        Title: "启用文本转语音",
-        SubTitle: "启用文本生成语音服务",
-      },
-      Autoplay: {
-        Title: "启用自动朗读",
-        SubTitle: "自动生成语音并播放，需先开启文本转语音开关",
-      },
-      Model: "模型",
-      Engine: "转换引擎",
-      Voice: {
-        Title: "声音",
-        SubTitle: "生成语音时使用的声音",
-      },
-      Speed: {
-        Title: "速度",
-        SubTitle: "生成语音的速度",
-      },
-    },
-    Realtime: {
-      Enable: {
-        Title: "实时聊天",
-        SubTitle: "开启实时聊天功能",
-      },
-      Provider: {
-        Title: "模型服务商",
-        SubTitle: "切换不同的服务商",
-      },
-      Model: {
-        Title: "模型",
-        SubTitle: "选择一个模型",
-      },
-      ApiKey: {
-        Title: "API Key",
-        SubTitle: "API Key",
-        Placeholder: "API Key",
-      },
-      Temperature: {
-        Title: "随机性 (temperature)",
-        SubTitle: "值越大，回复越随机",
-      },
     },
     EnableModelSearch: "启用模型搜索",
     EnableModelSearchSubTitle: "启用之后可以在选择模型时搜索过滤",
@@ -724,7 +643,6 @@ const cn = {
     Edit: "编辑",
     Export: "导出",
     Import: "导入",
-    Sync: "同步",
     Config: "配置",
     Search: "搜索",
     All: "全部",

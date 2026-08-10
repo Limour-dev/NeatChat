@@ -36,8 +36,7 @@ All categories:
 | Ollama        | `ollama`             | ComfyUI     | `comfyui`          |
 | VolcEngine    | `volcengine`         | VertexAI    | `vertexai`         |
 | SiliconCloud  | `siliconcloud`       | Perplexity  | `perplexity`       |
-| Stability     | `stability`          | Flux        | `flux`             |
-
+| Flux          | `flux`               |             |                    |
 1. **Docker (recommended, the only primary way)**: The image is built automatically by GitHub Actions (`.github/workflows/docker.yml`) and pushed to Docker Hub: `limour/next-chat`. Create a `docker-compose.yml`: 
 
 ```yaml

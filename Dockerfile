@@ -17,7 +17,6 @@ FROM base AS builder
 RUN apk update && apk add --no-cache git
 
 ENV OPENAI_API_KEY=""
-ENV GOOGLE_API_KEY=""
 ENV CODE=""
 ENV ENABLE_MCP=""
 WORKDIR /app
@@ -33,7 +32,6 @@ RUN apk add proxychains-ng
 
 ENV PROXY_URL=""
 ENV OPENAI_API_KEY=""
-ENV GOOGLE_API_KEY=""
 ENV CODE=""
 
 COPY --from=builder /app/public ./public

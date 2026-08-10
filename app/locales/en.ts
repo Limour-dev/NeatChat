@@ -44,8 +44,6 @@ const en: LocaleType = {
       FullScreen: "FullScreen",
       RefreshTitle: "Refresh Title",
       RefreshToast: "Title refresh request sent",
-      Speech: "Play",
-      StopSpeech: "Stop",
     },
     Commands: {
       new: "Start a new chat",
@@ -213,43 +211,6 @@ const en: LocaleType = {
       SubTitle: "Generate a suitable title based on the conversation content",
     },
     Sync: {
-      CloudState: "Last Update",
-      NotSyncYet: "Not sync yet",
-      Success: "Sync Success",
-      Fail: "Sync Fail",
-
-      Config: {
-        Modal: {
-          Title: "Config Sync",
-          Check: "Check Connection",
-        },
-        SyncType: {
-          Title: "Sync Type",
-          SubTitle: "Choose your favorite sync service",
-        },
-        Proxy: {
-          Title: "Enable CORS Proxy",
-          SubTitle: "Enable a proxy to avoid cross-origin restrictions",
-        },
-        ProxyUrl: {
-          Title: "Proxy Endpoint",
-          SubTitle:
-            "Only applicable to the built-in CORS proxy for this project",
-        },
-
-        WebDav: {
-          Endpoint: "WebDAV Endpoint",
-          UserName: "User Name",
-          Password: "Password",
-        },
-
-        UpStash: {
-          Endpoint: "UpStash Redis REST Url",
-          UserName: "Backup Name",
-          Password: "UpStash Redis REST Token",
-        },
-      },
-
       LocalState: "Local Data",
       Overview: (overview: any) => {
         return `${overview.chat} chats，${overview.message} messages，${overview.prompt} prompts，${overview.mask} masks`;
@@ -443,50 +404,6 @@ const en: LocaleType = {
       Title: "Frequency Penalty",
       SubTitle:
         "A larger value decreasing the likelihood to repeat the same line",
-    },
-    TTS: {
-      Enable: {
-        Title: "Enable TTS",
-        SubTitle: "Enable text-to-speech service",
-      },
-      Autoplay: {
-        Title: "Enable Autoplay",
-        SubTitle:
-          "Automatically generate speech and play, you need to enable the text-to-speech switch first",
-      },
-      Model: "Model",
-      Voice: {
-        Title: "Voice",
-        SubTitle: "The voice to use when generating the audio",
-      },
-      Speed: {
-        Title: "Speed",
-        SubTitle: "The speed of the generated audio",
-      },
-      Engine: "TTS Engine",
-    },
-    Realtime: {
-      Enable: {
-        Title: "Realtime Chat",
-        SubTitle: "Enable realtime chat feature",
-      },
-      Provider: {
-        Title: "Model Provider",
-        SubTitle: "Switch between different providers",
-      },
-      Model: {
-        Title: "Model",
-        SubTitle: "Select a model",
-      },
-      ApiKey: {
-        Title: "API Key",
-        SubTitle: "API Key",
-        Placeholder: "API Key",
-      },
-      Temperature: {
-        Title: "Randomness (temperature)",
-        SubTitle: "Higher values result in more random responses",
-      },
     },
     EnableModelSearch: "Enable Model Search",
     EnableModelSearchSubTitle:
@@ -731,7 +648,6 @@ const en: LocaleType = {
     Edit: "Edit",
     Export: "Export",
     Import: "Import",
-    Sync: "Sync",
     Config: "Config",
     Search: "Search",
     All: "All",

@@ -12,12 +12,7 @@ import EditIcon from "../icons/edit.svg";
 import EyeIcon from "../icons/eye.svg";
 import DownloadIcon from "../icons/download.svg";
 import UploadIcon from "../icons/upload.svg";
-import ConfigIcon from "../icons/config.svg";
 import ConfirmIcon from "../icons/confirm.svg";
-
-import ConnectionIcon from "../icons/connection.svg";
-import CloudSuccessIcon from "../icons/cloud-success.svg";
-import CloudFailIcon from "../icons/cloud-fail.svg";
 import {
   Input,
   List,
@@ -51,7 +46,6 @@ import Link from "next/link";
 import {
   OPENAI_BASE_URL,
   Path,
-  STORAGE_KEY,
   ServiceProvider,
   SlotID,
   UPDATE_URL,
@@ -63,9 +57,6 @@ import { useNavigate } from "react-router-dom";
 import { useSyncStore } from "../store/sync";
 import { nanoid } from "nanoid";
 import { useMaskStore } from "../store/mask";
-import { ProviderType } from "../utils/cloud";
-import { TTSConfigList } from "./tts-config";
-import { RealtimeConfigList } from "./realtime-chat/realtime-config";
 import { ModelSelectorModal } from "./model-selector-modal";
 
 function EditPromptModal(props: { id: string; onClose: () => void }) {
@@ -262,218 +253,11 @@ function DangerItems() {
   );
 }
 
-function CheckButton() {
-  const syncStore = useSyncStore();
-
-  const couldCheck = useMemo(() => {
-    return syncStore.cloudSync();
-  }, [syncStore]);
-
-  const [checkState, setCheckState] = useState<
-    "none" | "checking" | "success" | "failed"
-  >("none");
-
-  async function check() {
-    setCheckState("checking");
-    const valid = await syncStore.check();
-    setCheckState(valid ? "success" : "failed");
-  }
-
-  if (!couldCheck) return null;
-
-  return (
-    <IconButton
-      text={Locale.Settings.Sync.Config.Modal.Check}
-      bordered
-      onClick={check}
-      icon={
-        checkState === "none" ? (
-          <ConnectionIcon />
-        ) : checkState === "checking" ? (
-          <LoadingIcon />
-        ) : checkState === "success" ? (
-          <CloudSuccessIcon />
-        ) : checkState === "failed" ? (
-          <CloudFailIcon />
-        ) : (
-          <ConnectionIcon />
-        )
-      }
-    ></IconButton>
-  );
-}
-
-function SyncConfigModal(props: { onClose?: () => void }) {
-  const syncStore = useSyncStore();
-
-  return (
-    <div className="modal-mask">
-      <Modal
-        title={Locale.Settings.Sync.Config.Modal.Title}
-        onClose={() => props.onClose?.()}
-        actions={[
-          <CheckButton key="check" />,
-          <IconButton
-            key="confirm"
-            onClick={props.onClose}
-            icon={<ConfirmIcon />}
-            bordered
-            text={Locale.UI.Confirm}
-          />,
-        ]}
-      >
-        <List>
-          <ListItem
-            title={Locale.Settings.Sync.Config.SyncType.Title}
-            subTitle={Locale.Settings.Sync.Config.SyncType.SubTitle}
-          >
-            <select
-              value={syncStore.provider}
-              onChange={(e) => {
-                syncStore.update(
-                  (config) =>
-                    (config.provider = e.target.value as ProviderType),
-                );
-              }}
-            >
-              {Object.entries(ProviderType).map(([k, v]) => (
-                <option value={v} key={k}>
-                  {k}
-                </option>
-              ))}
-            </select>
-          </ListItem>
-
-          <ListItem
-            title={Locale.Settings.Sync.Config.Proxy.Title}
-            subTitle={Locale.Settings.Sync.Config.Proxy.SubTitle}
-          >
-            <input
-              type="checkbox"
-              checked={syncStore.useProxy}
-              onChange={(e) => {
-                syncStore.update(
-                  (config) => (config.useProxy = e.currentTarget.checked),
-                );
-              }}
-            ></input>
-          </ListItem>
-          {syncStore.useProxy ? (
-            <ListItem
-              title={Locale.Settings.Sync.Config.ProxyUrl.Title}
-              subTitle={Locale.Settings.Sync.Config.ProxyUrl.SubTitle}
-            >
-              <input
-                type="text"
-                value={syncStore.proxyUrl}
-                onChange={(e) => {
-                  syncStore.update(
-                    (config) => (config.proxyUrl = e.currentTarget.value),
-                  );
-                }}
-              ></input>
-            </ListItem>
-          ) : null}
-        </List>
-
-        {syncStore.provider === ProviderType.WebDAV && (
-          <>
-            <List>
-              <ListItem title={Locale.Settings.Sync.Config.WebDav.Endpoint}>
-                <input
-                  type="text"
-                  value={syncStore.webdav.endpoint}
-                  onChange={(e) => {
-                    syncStore.update(
-                      (config) =>
-                        (config.webdav.endpoint = e.currentTarget.value),
-                    );
-                  }}
-                ></input>
-              </ListItem>
-
-              <ListItem title={Locale.Settings.Sync.Config.WebDav.UserName}>
-                <input
-                  type="text"
-                  value={syncStore.webdav.username}
-                  onChange={(e) => {
-                    syncStore.update(
-                      (config) =>
-                        (config.webdav.username = e.currentTarget.value),
-                    );
-                  }}
-                ></input>
-              </ListItem>
-              <ListItem title={Locale.Settings.Sync.Config.WebDav.Password}>
-                <PasswordInput
-                  value={syncStore.webdav.password}
-                  onChange={(e) => {
-                    syncStore.update(
-                      (config) =>
-                        (config.webdav.password = e.currentTarget.value),
-                    );
-                  }}
-                ></PasswordInput>
-              </ListItem>
-            </List>
-          </>
-        )}
-
-        {syncStore.provider === ProviderType.UpStash && (
-          <List>
-            <ListItem title={Locale.Settings.Sync.Config.UpStash.Endpoint}>
-              <input
-                type="text"
-                value={syncStore.upstash.endpoint}
-                onChange={(e) => {
-                  syncStore.update(
-                    (config) =>
-                      (config.upstash.endpoint = e.currentTarget.value),
-                  );
-                }}
-              ></input>
-            </ListItem>
-
-            <ListItem title={Locale.Settings.Sync.Config.UpStash.UserName}>
-              <input
-                type="text"
-                value={syncStore.upstash.username}
-                placeholder={STORAGE_KEY}
-                onChange={(e) => {
-                  syncStore.update(
-                    (config) =>
-                      (config.upstash.username = e.currentTarget.value),
-                  );
-                }}
-              ></input>
-            </ListItem>
-            <ListItem title={Locale.Settings.Sync.Config.UpStash.Password}>
-              <PasswordInput
-                value={syncStore.upstash.apiKey}
-                onChange={(e) => {
-                  syncStore.update(
-                    (config) => (config.upstash.apiKey = e.currentTarget.value),
-                  );
-                }}
-              ></PasswordInput>
-            </ListItem>
-          </List>
-        )}
-      </Modal>
-    </div>
-  );
-}
-
 function SyncItems() {
   const syncStore = useSyncStore();
   const chatStore = useChatStore();
   const promptStore = usePromptStore();
   const maskStore = useMaskStore();
-  const couldSync = useMemo(() => {
-    return syncStore.cloudSync();
-  }, [syncStore]);
-
-  const [showSyncConfigModal, setShowSyncConfigModal] = useState(false);
 
   const stateOverview = useMemo(() => {
     const sessions = chatStore.sessions;
@@ -490,43 +274,6 @@ function SyncItems() {
   return (
     <>
       <List>
-        <ListItem
-          title={Locale.Settings.Sync.CloudState}
-          subTitle={
-            syncStore.lastProvider
-              ? `${new Date(syncStore.lastSyncTime).toLocaleString()} [${
-                  syncStore.lastProvider
-                }]`
-              : Locale.Settings.Sync.NotSyncYet
-          }
-        >
-          <div style={{ display: "flex" }}>
-            <IconButton
-              aria={Locale.Settings.Sync.CloudState + Locale.UI.Config}
-              icon={<ConfigIcon />}
-              text={Locale.UI.Config}
-              onClick={() => {
-                setShowSyncConfigModal(true);
-              }}
-            />
-            {couldSync && (
-              <IconButton
-                icon={<ResetIcon />}
-                text={Locale.UI.Sync}
-                onClick={async () => {
-                  try {
-                    await syncStore.sync();
-                    showToast(Locale.Settings.Sync.Success);
-                  } catch (e) {
-                    showToast(Locale.Settings.Sync.Fail);
-                    console.error("[Sync]", e);
-                  }
-                }}
-              />
-            )}
-          </div>
-        </ListItem>
-
         <ListItem
           title={Locale.Settings.Sync.LocalState}
           subTitle={Locale.Settings.Sync.Overview(stateOverview)}
@@ -551,36 +298,8 @@ function SyncItems() {
           </div>
         </ListItem>
       </List>
-
-      {showSyncConfigModal && (
-        <SyncConfigModal onClose={() => setShowSyncConfigModal(false)} />
-      )}
     </>
   );
-}
-
-// 添加一个函数来从服务端获取 CUSTOM_MODELS 环境变量
-function useServerCustomModels() {
-  const [serverCustomModels, setServerCustomModels] = useState("");
-  const config = useAppConfig();
-
-  useEffect(() => {
-    // 从服务端获取 CUSTOM_MODELS 环境变量
-    fetch("/api/config")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.customModels && !config.customModels) {
-          // 只有当客户端没有设置自定义模型时，才使用服务端的设置
-          config.update((config) => (config.customModels = data.customModels));
-          setServerCustomModels(data.customModels);
-        }
-      })
-      .catch((err) => {
-        console.error("Failed to fetch server custom models:", err);
-      });
-  }, []);
-
-  return serverCustomModels;
 }
 
 export function Settings() {
@@ -1229,28 +948,6 @@ export function Settings() {
         {shouldShowPromptModal && (
           <UserPromptModal onClose={() => setShowPromptModal(false)} />
         )}
-        <List>
-          <RealtimeConfigList
-            realtimeConfig={config.realtimeConfig}
-            updateConfig={(updater) => {
-              const realtimeConfig = { ...config.realtimeConfig };
-              updater(realtimeConfig);
-              config.update(
-                (config) => (config.realtimeConfig = realtimeConfig),
-              );
-            }}
-          />
-        </List>
-        <List>
-          <TTSConfigList
-            ttsConfig={config.ttsConfig}
-            updateConfig={(updater) => {
-              const ttsConfig = { ...config.ttsConfig };
-              updater(ttsConfig);
-              config.update((config) => (config.ttsConfig = ttsConfig));
-            }}
-          />
-        </List>
 
         <DangerItems />
 
