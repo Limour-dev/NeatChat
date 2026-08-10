@@ -1917,7 +1917,7 @@ function _Chat() {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="window-header" data-tauri-drag-region>
+      <div className="window-header">
         {isMobileScreen && (
           <div className="window-actions">
             <div className={"window-action-button"}>

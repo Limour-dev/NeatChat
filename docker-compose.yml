@@ -1,38 +1,21 @@
-version: "3.9"
+# NeatChat Docker 启动示例
+# 镜像由 .github/workflows/docker.yml 自动构建并推送至 Docker Hub：limour/next-chat
+# 启动：docker compose up -d   →  浏览器访问 http://<服务器IP>:3000
+version: '3'
 services:
-  NeatChat:
-    profiles: [ "no-proxy" ]
-    container_name: NeatChat
-    image: tianzhentech/chatgpt-next-web:latest
+  next-web:
+    image: limour/next-chat
+    container_name: next-chat
     ports:
-      - 3000:3000
+      - "3000:3000"              # 宿主机端口:容器端口（如前面有反代可去掉此行）
     environment:
-      - OPENAI_API_KEY=$OPENAI_API_KEY
-      - GOOGLE_API_KEY=$GOOGLE_API_KEY
-      - CODE=$CODE
-      - BASE_URL=$BASE_URL
-      - OPENAI_ORG_ID=$OPENAI_ORG_ID
-      - HIDE_USER_API_KEY=$HIDE_USER_API_KEY
-      - DISABLE_GPT4=$DISABLE_GPT4
-      - ENABLE_BALANCE_QUERY=$ENABLE_BALANCE_QUERY
-      - DISABLE_FAST_LINK=$DISABLE_FAST_LINK
-      - OPENAI_SB=$OPENAI_SB
-
-  NeatChat-proxy:
-    profiles: [ "proxy" ]
-    container_name: NeatChat-proxy
-    image: tianzhentech/chatgpt-next-web:latest
-    ports:
-      - 3000:3000
-    environment:
-      - OPENAI_API_KEY=$OPENAI_API_KEY
-      - GOOGLE_API_KEY=$GOOGLE_API_KEY
-      - CODE=$CODE
-      - PROXY_URL=$PROXY_URL
-      - BASE_URL=$BASE_URL
-      - OPENAI_ORG_ID=$OPENAI_ORG_ID
-      - HIDE_USER_API_KEY=$HIDE_USER_API_KEY
-      - DISABLE_GPT4=$DISABLE_GPT4
-      - ENABLE_BALANCE_QUERY=$ENABLE_BALANCE_QUERY
-      - DISABLE_FAST_LINK=$DISABLE_FAST_LINK
-      - OPENAI_SB=$OPENAI_SB
+      - TZ=Asia/Shanghai         # 时区
+      - BASE_URL=https://xxxx    # 上游 API 地址（OpenAI 兼容网关 / 聚合站）
+      # 模型列表：-all 隐藏全部，+模型@类别 逐个启用（类别见 README「模型类别」表）
+      - CUSTOM_MODELS=-all,+gpt-4o-mini@Deepbricks,+ChatGPT@OpenAI,+claude@OpenRouter,+gemini@Vertex
+      - ENABLE_BALANCE_QUERY=1
+      - HOSTNAME=0.0.0.0
+      - DEFAULT_MODEL=ChatGPT
+      # - PROXY_URL=http://host.docker.internal:7890   # 可选：容器内请求走代理（Dockerfile 内置 proxychains-ng）
+      # - CODE=your-password                           # 可选：访问码
+    restart: unless-stopped

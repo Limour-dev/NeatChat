@@ -2,7 +2,8 @@
 
 > 本文档深入分析 NeatChat 的代码架构。NeatChat 是基于
 > [ChatGPT-Next-Web (NextChat)](https://github.com/ChatGPTNextWeb/ChatGPT-Next-Web)
-> 深度重构的 AI 对话客户端，支持 Web / PWA / Windows / Linux / macOS 多端。
+> 深度重构的 AI 对话客户端，当前支持 Web / PWA / Windows / Linux / macOS 多端；
+> 计划收敛为「仅 Linux 下 Docker 启动 + Web 访问」单一方式（见 §14 演进计划）。
 
 - 技术栈：Next.js 14 (App Router) + React 18 + TypeScript + Zustand + Tauri 1.x (Rust)
 - 状态管理：Zustand（`create` + `persist` 中间件）
@@ -370,16 +371,11 @@ tools 随请求体发送，工具调用结果循环回填（见 §4.3）。
 
 ---
 
-## 9. 桌面端（Tauri）
+## 9. 桌面端（Tauri）——已移除
 
-- `src-tauri/src/main.rs`：注册 `stream_fetch` 命令 + `tauri-plugin-window-state`（记忆窗口状态）。
-- `src-tauri/src/stream.rs`：见 §8.1，`reqwest` 客户端（3s 连接超时、3 次重定向、POST/PUT/PATCH 带 body），
-  用 `AtomicU32` 生成 request_id 区分并发请求。
-- `tauri.conf.json`：`beforeBuildCommand: yarn export`（静态导出）；权限 allowlist
-  （http 全开、fs、dialog、clipboard、window、notification、shell-open）；
-  内置 Tauri 更新器（updater pubkey）。
-- 前端通过 `window.__TAURI__` 全局对象（`app/global.d.ts` 声明）使用剪贴板、保存对话框、
-  写文件、通知等能力；`clientUpdate()` 走 Tauri updater。
+> 自 v1.2.0 起，桌面端（Tauri）及内置更新器（updater pubkey 签名校验）已移除，
+> 仅保留 Linux Docker + Web 访问（见 §14 演进计划）。原 `src-tauri/` 目录、
+> `app/utils/stream.ts`（stream_fetch 桥）、`window.__TAURI__` 相关代码均已删除。
 
 ---
 
@@ -451,3 +447,97 @@ TTS/Realtime 配置、功能开关）。`collectModels` 支持 `customModels` �
    无服务端账号体系。
 5. **安全边界**：服务端只下发非敏感配置（`/api/config`）；访问码 md5 存储比对；
    WebDAV/Upstash 代理有 host 白名单；密钥永不进入客户端构建产物。
+
+---
+
+## 14. 演进计划：收敛为「Linux Docker + Web 访问」单一部署方式
+
+> 目标：移除桌面端（Tauri）、PWA 静态导出、Vercel 等其它使用/部署方式，
+> 仅保留「Linux 上运行 Docker 镜像（`limour/next-chat`）+ 浏览器访问」这一种方式，
+> 降低代码复杂度与维护成本。镜像由 `.github/workflows/docker.yml` 在
+> `release` 发布或手动触发（`workflow_dispatch`）时构建并推送到 Docker Hub。
+
+### 14.1 现状（待移除项）
+
+| 使用方式 | 载体 | 核心代码/配置 | 状态 |
+|---------|------|--------------|------|
+| Web（standalone + Docker） | Next.js SSR + `/api/*` 代理 | `app/api`、`Dockerfile`、`docker-compose.yml` | ✅ 保留（唯一目标） |
+| 桌面端（Tauri） | Rust 壳 + 静态导出 | `src-tauri/`、`app/utils/stream.ts`、`BUILD_APP=1`、`app:build` | ✅ 已移除（v1.2.0） |
+| PWA / 静态导出 | `BUILD_MODE=export` | `app/config/build.ts`、`next.config.mjs`（`output: export`） | ❌ 待移除 |
+| Vercel 部署 | Serverless | README 按钮、`vercel.json` | ❌ 待移除（可选） |
+
+### 14.1.1 模型平台收敛（已完成）
+
+> 仅保留 OpenAI 平台，移除所有其它模型提供商（含 Azure）：
+
+- [x] 删除 `app/client/platforms/` 下除 `openai.ts` 外的全部实现（google/anthropic/baidu/bytedance/alibaba/tencent/moonshot/iflytek/xai/glm）
+- [x] 删除 `app/api/` 下除 `openai.ts`/`common.ts`/`auth.ts`/`proxy.ts` 外的全部 handler（含 `azure.ts`、`stability.ts`、`tencent/`）
+- [x] `app/constant.ts`：`ServiceProvider` 仅留 `OpenAI`，`ModelProvider` 仅留 `GPT`，模型表仅保留 OpenAI 模型，删除各平台常量与 `ApiPath` 条目
+- [x] `app/store/access.ts`：仅保留 OpenAI URL/Key 配置，删除各平台 `isValidXxx` 与字段
+- [x] `app/config/server.ts`：仅保留 OpenAI 相关环境变量与返回字段
+- [x] `app/client/api.ts`：`ClientApi`/`getClientApi`/`getHeaders` 仅走 OpenAI
+- [x] `app/api/[provider]` 路由：仅分发 `openai` 与 `proxy`
+- [x] `next.config.mjs`：删除 azure/google/anthropic/alibaba 的 rewrites
+- [x] 移除 Stable Diffusion（SD）绘画功能（唯一提供商 Stability 已移除）：删除 `app/store/sd.ts`、`app/components/sd/`、`Path.Sd/SdNew`、emoji/locales 相关条目
+- [x] `app/api/common.ts`：删除 Azure 分支（`azureUrl`/`azureApiVersion`/deployment 重写）
+- [x] 清理 `app/components/settings.tsx`、`auth.tsx`、`realtime-*`、`model-config.tsx`、`emoji.tsx`、locales 中的平台 UI/文案
+- [x] 删除无引用的 `app/utils/baidu.ts`、`app/utils/tencent.ts`、`app/utils/hmac.ts`
+
+> 注：`CUSTOM_MODELS` 的 `@类别` 自定义模型仍可用（OpenAI 兼容通道，如 `+gpt-4o-mini@Deepbricks`）。
+### 14.2 移除步骤
+
+**Phase 1：移除 Tauri 桌面端** ✅ 已完成
+
+- [x] 删除 `src-tauri/` 目录（`main.rs` / `stream.rs` / `tauri.conf.json` / `Cargo.*` / `icons/`）
+- [x] `package.json`：删除 `@tauri-apps/api`、`@tauri-apps/cli` 依赖；删除 `app:dev`、`app:build` 脚本
+- [x] 删除 `app/utils/stream.ts`（Tauri `stream_fetch` 桥），`app/utils/chat.ts` 恢复直接使用全局 `fetch`
+- [x] 删除 `app/global.d.ts` 中 `__TAURI__` 类型声明；清理 `app/store/update.ts`、`app/store/plugin.ts`、`app/utils.ts`、`app/components/exporter.tsx` 中的 `window.__TAURI__` 分支
+- [x] 移除 Tauri 更新器（updater pubkey 签名校验）与 `clientUpdate()`；`app/config/build.ts` 版本号改为硬编码
+- [ ] `app/config/build.ts`：移除 `BUILD_APP=1` / `isApp` 逻辑（**挂起**：`isApp` 仍被 export/PWA 模式使用，待 Phase 2 一并移除）
+
+**Phase 2：移除 export 静态构建（PWA）**
+
+- [ ] `package.json`：删除 `export`、`export:dev`、`app:dev` 脚本，仅保留 `build`（standalone）
+- [ ] `app/config/build.ts`：`BUILD_MODE` 固定为 `standalone`，删除 export 分支
+- [ ] `app/store/access.ts` 及各 `app/client/platforms/*.ts`：删除 `isApp` 三目分支，URL 一律走本地 `/api/xx` 代理
+- [ ] `app/locales/{cn,en}.ts`、`app/store/sync.ts`、`app/store/config.ts`、`app/store/update.ts`：删除 `isApp` 相关分支
+- [ ] `next.config.mjs`：移除 `output: export`、`images.unoptimized`、`LimitChunkCountPlugin`（DISABLE_CHUNK）等 export-only 配置
+
+**Phase 3：移除 Vercel 部署（可选）**
+
+- [ ] 删除 `vercel.json`；README 移除 Vercel 按钮与说明
+- [ ] 评估 `@vercel/analytics` / `@vercel/speed-insights` 依赖的去留
+
+**Phase 4：文档与 CI 收敛**
+
+- [ ] `ARCHITECTURE.md`：删除 §1 双模式/Tauri 描述、§8.1 双端 fetch 适配、§9 桌面端章节，统一为「Docker standalone + Web」
+- [ ] README：移除 Windows / macOS / PWA 徽章与 Vercel 一段，仅保留 Docker 启动说明
+- [ ] `.github/workflows/docker.yml` 保持不变（已是唯一发布通道）
+
+### 14.3 目标架构（收敛后）
+
+```
+    Linux 主机
+  ┌───────────────────────────────┐
+  │  Docker (limour/next-chat)    │
+  │  ┌─────────────────────────┐  │
+  │  │ Next.js standalone      │  │
+  │  │  UI (app/components)    │  │
+  │  │  Store (app/store)      │  │
+  │  │  Client API (app/client)│  │
+  │  │  /api/* 代理 → 上游 LLM │  │
+  │  └───────────┬─────────────┘  │
+  │              │ :3000          │
+  └──────────────┼────────────────┘
+                 │ HTTP
+        ┌────────▼────────┐
+        │  浏览器 (Web)    │
+        └─────────────────┘
+```
+
+### 14.4 验收标准
+
+- [ ] `docker compose up -d` 后浏览器可直接访问并使用（参考 README 示例）
+- [ ] `yarn build`（standalone）为唯一构建路径，`yarn export` / `tauri build` 不复存在
+- [ ] 代码库中不再出现 `__TAURI__`、`BUILD_APP`、`src-tauri` 等痕迹
+- [ ] `.github/workflows/docker.yml` 为唯一发布通道，镜像推送 `limour/next-chat`

@@ -19,7 +19,7 @@ const en: LocaleType = {
     Return: "Return",
     Title: "Need Access Code",
     Tips: "Please enter access code below",
-    SubTips: "Or enter your OpenAI or Google API Key",
+    SubTips: "Or enter your OpenAI API Key",
     Input: "access code",
     Confirm: "Confirm",
     Later: "Later",
@@ -318,11 +318,11 @@ const en: LocaleType = {
       },
       CustomEndpoint: {
         Title: "Custom Endpoint",
-        SubTitle: "Use custom Azure or OpenAI service",
+        SubTitle: "Use custom OpenAI service",
       },
       Provider: {
         Title: "Model Provider",
-        SubTitle: "Select Azure or OpenAI",
+        SubTitle: "Select OpenAI",
       },
       OpenAI: {
         ApiKey: {
@@ -334,155 +334,6 @@ const en: LocaleType = {
         Endpoint: {
           Title: "OpenAI Endpoint",
           SubTitle: "Must start with http(s):// or use /api/openai as default",
-        },
-      },
-      Azure: {
-        ApiKey: {
-          Title: "Azure Api Key",
-          SubTitle: "Check your api key from Azure console",
-          Placeholder: "Azure Api Key",
-        },
-
-        Endpoint: {
-          Title: "Azure Endpoint",
-          SubTitle: "Example: ",
-        },
-
-        ApiVerion: {
-          Title: "Azure Api Version",
-          SubTitle: "Check your api version from azure console",
-        },
-      },
-      Anthropic: {
-        ApiKey: {
-          Title: "Anthropic API Key",
-          SubTitle:
-            "Use a custom Anthropic Key to bypass password access restrictions",
-          Placeholder: "Anthropic API Key",
-        },
-
-        Endpoint: {
-          Title: "Endpoint Address",
-          SubTitle: "Example: ",
-        },
-
-        ApiVerion: {
-          Title: "API Version (claude api version)",
-          SubTitle: "Select and input a specific API version",
-        },
-      },
-      Baidu: {
-        ApiKey: {
-          Title: "Baidu API Key",
-          SubTitle: "Use a custom Baidu API Key",
-          Placeholder: "Baidu API Key",
-        },
-        SecretKey: {
-          Title: "Baidu Secret Key",
-          SubTitle: "Use a custom Baidu Secret Key",
-          Placeholder: "Baidu Secret Key",
-        },
-        Endpoint: {
-          Title: "Endpoint Address",
-          SubTitle: "not supported, configure in .env",
-        },
-      },
-      Tencent: {
-        ApiKey: {
-          Title: "Tencent API Key",
-          SubTitle: "Use a custom Tencent API Key",
-          Placeholder: "Tencent API Key",
-        },
-        SecretKey: {
-          Title: "Tencent Secret Key",
-          SubTitle: "Use a custom Tencent Secret Key",
-          Placeholder: "Tencent Secret Key",
-        },
-        Endpoint: {
-          Title: "Endpoint Address",
-          SubTitle: "not supported, configure in .env",
-        },
-      },
-      ByteDance: {
-        ApiKey: {
-          Title: "ByteDance API Key",
-          SubTitle: "Use a custom ByteDance API Key",
-          Placeholder: "ByteDance API Key",
-        },
-        Endpoint: {
-          Title: "Endpoint Address",
-          SubTitle: "Example: ",
-        },
-      },
-      Alibaba: {
-        ApiKey: {
-          Title: "Alibaba API Key",
-          SubTitle: "Use a custom Alibaba Cloud API Key",
-          Placeholder: "Alibaba Cloud API Key",
-        },
-        Endpoint: {
-          Title: "Endpoint Address",
-          SubTitle: "Example: ",
-        },
-      },
-      Moonshot: {
-        ApiKey: {
-          Title: "Moonshot API Key",
-          SubTitle: "Use a custom Moonshot API Key",
-          Placeholder: "Moonshot API Key",
-        },
-        Endpoint: {
-          Title: "Endpoint Address",
-          SubTitle: "Example: ",
-        },
-      },
-      XAI: {
-        ApiKey: {
-          Title: "XAI API Key",
-          SubTitle: "Use a custom XAI API Key",
-          Placeholder: "XAI API Key",
-        },
-        Endpoint: {
-          Title: "Endpoint Address",
-          SubTitle: "Example: ",
-        },
-      },
-      ChatGLM: {
-        ApiKey: {
-          Title: "ChatGLM API Key",
-          SubTitle: "Use a custom ChatGLM API Key",
-          Placeholder: "ChatGLM API Key",
-        },
-        Endpoint: {
-          Title: "Endpoint Address",
-          SubTitle: "Example: ",
-        },
-      },
-      Stability: {
-        ApiKey: {
-          Title: "Stability API Key",
-          SubTitle: "Use a custom Stability API Key",
-          Placeholder: "Stability API Key",
-        },
-        Endpoint: {
-          Title: "Endpoint Address",
-          SubTitle: "Example: ",
-        },
-      },
-      Iflytek: {
-        ApiKey: {
-          Title: "Iflytek API Key",
-          SubTitle: "Use a Iflytek API Key",
-          Placeholder: "Iflytek API Key",
-        },
-        ApiSecret: {
-          Title: "Iflytek API Secret",
-          SubTitle: "Use a Iflytek API Secret",
-          Placeholder: "Iflytek API Secret",
-        },
-        Endpoint: {
-          Title: "Endpoint Address",
-          SubTitle: "Example: ",
         },
       },
       CustomModel: {
@@ -571,27 +422,6 @@ const en: LocaleType = {
           TenSeconds: "10s",
         },
       },
-      Google: {
-        ApiKey: {
-          Title: "API Key",
-          SubTitle: "Obtain your API Key from Google AI",
-          Placeholder: "Google AI API Key",
-        },
-
-        Endpoint: {
-          Title: "Endpoint Address",
-          SubTitle: "Example: ",
-        },
-
-        ApiVersion: {
-          Title: "API Version (specific to gemini-pro)",
-          SubTitle: "Select a specific API version",
-        },
-        GoogleSafetySettings: {
-          Title: "Google Safety Settings",
-          SubTitle: "Select a safety filtering level",
-        },
-      },
     },
 
     Model: "Model",
@@ -659,16 +489,6 @@ const en: LocaleType = {
         Title: "API Key",
         SubTitle: "API Key",
         Placeholder: "API Key",
-      },
-      Azure: {
-        Endpoint: {
-          Title: "Endpoint",
-          SubTitle: "Endpoint",
-        },
-        Deployment: {
-          Title: "Deployment Name",
-          SubTitle: "Deployment Name",
-        },
       },
       Temperature: {
         Title: "Randomness (temperature)",

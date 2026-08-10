@@ -6,7 +6,6 @@
 ![Stars](https://img.shields.io/github/stars/tianzhentech/neatchat)
 ![Forks](https://img.shields.io/github/forks/tianzhentech/neatchat)
 ![Web](https://img.shields.io/badge/Web-PWA-orange?logo=microsoftedge)
-![Web](https://img.shields.io/badge/-Windows-blue?logo=windows)
 ![Release Badge](https://img.shields.io/github/v/release/tianzhentech/neatchat.svg)
 ![License](https://img.shields.io/github/license/tianzhentech/neatchat.svg)
 
@@ -18,67 +17,6 @@
 
 基于 NextChat 深度重构，一个更优雅、更强大的 AI 对话解决方案
 </div>
-
-## ✨ 新特性
-
-🎨 **UI 焕新升级**
-
-✨ 全面适配 Lobe-UI 设计系统，微调大量交互细节
-🌿 更清爽的界面布局，沉浸式无干扰聊天体验
-
-🔌 **插件生态扩展**
-
-🧩 原生兼容官方插件协议，无缝接入 NextChat 插件生态
-📦 预置绘图/计算/搜索等高频插件，一键即用免配置
-
-📱 **全端畅快交互**
-
-🔄 深度适配移动端触控操作，手势操作丝滑流畅
-📲 响应式布局智能适配手机/平板/桌面，处处皆自然
-
-🌀 **思维链可视化**
-
-🧠 支持折叠式思维链与渐进式思考过程展示
-🎭 为复杂推理场景设计的高颜值可视化交互
-
-⚡ **极速开箱体验**
-
-🚀 支持从服务端/客户端 API 自动拉取模型列表
-📦 智能分类 & 快捷筛选，3 秒开启第一段对话
-
-⚙️ **配置灵活自由**
-
-🔗 全新设计的 `CUSTOM_MODELS` 变量逻辑，服务端→客户端配置无缝衔接
-🌐 本地优先原则，同时完美兼容 Web 端用户配置
-
-🧪 **智能模型探针**
-
-✅ 独创多协议测试方案，一键检测代理通道可用性
-🔋 支持服务端/客户端双模式健康检查，稳定性一目了然
-
-🖼️ **模型头像工坊**
-
-🎨 本地化头像匹配规则引擎，支持正则表达式深度定制
-🔄 自动同步官方模型库，再也不怕新模型「无头可用」
-
-🚧 **即将震撼来袭**
-
-🌉 原生多通道负载均衡功能（无需部署 OneAPI/NewAPI）
-🏆 打造 All-in-One 智能对话中枢，重新定义生产力边界
-
-## 🖼️ 界面预览
-
-![](https://raw.githubusercontent.com/tianzhentech/static/main/images/%7B326DD837-A2FE-4603-A289-47FD5FED329A%7D.png)
-![](https://raw.githubusercontent.com/tianzhentech/static/main/images/%7B1FB6B249-72D5-42F0-B861-7FE95ADCEEEE%7D.png)
-![](https://raw.githubusercontent.com/tianzhentech/static/main/images/%7B6656232E-09F3-472D-A2B4-621DDD57D9CC%7D.png)
-
-![](https://raw.githubusercontent.com/tianzhentech/static/main/images/20250312232933.png)
-
-![](https://raw.githubusercontent.com/tianzhentech/static/main/images/20250312223248.png)
-
-![](https://raw.githubusercontent.com/tianzhentech/static/main/images/20250313011331.png)
-
-> 更多内容请移步[演示站](https://nc.tianz.me)
 
 ## ⚡ 快速开始
 
@@ -106,11 +44,35 @@
 | SiliconCloud | `siliconcloud`     | Perplexity | `perplexity`     |
 | Stability    | `stability`        | Flux       | `flux`           |
 
-1. 支持vercel一键部署：[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/tianzhentech/NeatChat.git)
+1. **Docker 启动（推荐，唯一主推方式）**：镜像由 GitHub Actions（`.github/workflows/docker.yml`）自动构建并推送至 Docker Hub：`limour/next-chat`。新建 `docker-compose.yml`：
 
-2. docker只需要替换官方**yidadaa/chatgpt-next-web:版本号**为**tianzhentech/chatgpt-next-web:latest**即可
+```yaml
+version: '3'
+services:
+  next-web:
+    image: limour/next-chat
+    ports:
+      - "3000:3000"
+    environment:
+      - TZ=Asia/Shanghai
+      - BASE_URL=https://xxxx
+      - CUSTOM_MODELS=-all,+gpt-4o-mini@Deepbricks,+ChatGPT@OpenAI,+claude@OpenRouter,+gemini@Vertex
+      - ENABLE_BALANCE_QUERY=1
+      - HOSTNAME=0.0.0.0
+      - DEFAULT_MODEL=ChatGPT
+    restart: unless-stopped
+```
 
-> 其余配置与官方一致，详细使用请参考[NextChat](https://github.com/ChatGPTNextWeb/ChatGPT-Next-Web)
+启动并访问：
+
+```bash
+docker compose up -d
+# 浏览器访问 http://<服务器IP>:3000
+```
+
+> 其余环境变量见 `.env.template`；其余配置与官方一致，详细使用请参考[NextChat](https://github.com/ChatGPTNextWeb/ChatGPT-Next-Web)
+
+2. ~~支持vercel一键部署~~（已列入移除计划，见 `ARCHITECTURE.md` §14）：[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/tianzhentech/NeatChat.git)
 
 ## 🚢 版本说明
 
@@ -120,27 +82,3 @@
 | **正式发行版** | ✅ 稳定 | `vX.Y.Z`                         | ✔️ 生产 | 由预发行稳定后诞生 | 合并原mini分支特性 |
 | preview分支    | 🚫 废弃 | -                                | -      | 已合并到main分支   | 功能由预发行版承接 |
 | mini分支       | 🚫 废弃 | -                                | -      | 特性已整合到正式版 | 不再独立维护       |
-
-## 💝 赞助支持
-
-本项目不求赞助，如果有可能的话，可以支持我一些硅基流动或者火山引擎赠金，我会更好的支持相关系列模型，或者日后考虑开设公益站给有需要的人使用，欢迎各位佬友赞助。
-
-| 平台名称   | 直达链接                                            |
-| ---------- | --------------------------------------------------- |
-| ✅ 硅基流动 | [点击注册](https://cloud.siliconflow.cn/i/tX3hT0Ly) |
-| 🚀 火山引擎 | [立即访问](https://volcengine.com/L/i5QyNFSX)       |
-
-
-[![image](https://raw.githubusercontent.com/tianzhentech/static/main/images/20250409181441.png)](https://yxvm.com/)
-
-[NodeSupport](https://github.com/NodeSeekDev/NodeSupport)赞助了本项目
-
-<a>
-
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=tianzhentech/NeatChat&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=tianzhentech/NeatChat&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=tianzhentech/NeatChat&type=Date" />
- </picture>
-
-</a>

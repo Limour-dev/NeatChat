@@ -36,7 +36,6 @@ import VolcEngineIcon from "../icons/volcengine-color.svg";
 import VertexAIIcon from "../icons/vertexai-color.svg";
 import SiliconCloudIcon from "../icons/siliconcloud-color.svg";
 import PerplexityIcon from "../icons/perplexity-color.svg";
-import StabilityIcon from "../icons/stability-color.svg";
 import FluxIcon from "../icons/flux.svg";
 
 import "../styles/model-avatar.scss";
@@ -73,7 +72,6 @@ export {
   VertexAIIcon,
   SiliconCloudIcon,
   PerplexityIcon,
-  StabilityIcon,
   FluxIcon,
 };
 
@@ -107,7 +105,6 @@ export const DEFAULT_SYSTEM_CATEGORY_PATTERNS: Record<string, string> = {
   VertexAI: "vertexai",
   SiliconCloud: "siliconcloud",
   Perplexity: "perplexity",
-  Stability: "stability",
   Flux: "flux",
 };
 
@@ -433,13 +430,6 @@ export function Avatar(props: {
                   alt="Perplexity"
                 />
               );
-            case "Stability":
-              return (
-                <StabilityIcon
-                  className="user-avatar model-avatar"
-                  alt="Stability"
-                />
-              );
             case "Flux":
               return (
                 <FluxIcon className="user-avatar model-avatar" alt="Flux" />
@@ -594,13 +584,6 @@ export function getFixedCategoryAvatar(category: string) {
               <PerplexityIcon
                 className="user-avatar model-avatar"
                 alt="Perplexity"
-              />
-            );
-          case "Stability":
-            return (
-              <StabilityIcon
-                className="user-avatar model-avatar"
-                alt="Stability"
               />
             );
           case "Flux":

@@ -5,7 +5,6 @@
 ![Stars](https://img.shields.io/github/stars/tianzhentech/neatchat)
 ![Forks](https://img.shields.io/github/forks/tianzhentech/neatchat)
 ![Web](https://img.shields.io/badge/Web-PWA-orange?logo=microsoftedge)
-![Web](https://img.shields.io/badge/-Windows-blue?logo=windows)
 ![Release Badge](https://img.shields.io/github/v/release/tianzhentech/neatchat.svg)
 ![License](https://img.shields.io/github/license/tianzhentech/neatchat.svg)
 
@@ -17,67 +16,6 @@
 
 Built on a deep refactoring of NextChat: A more elegant and powerful AI conversation solution
 </div>
-
-## ✨ 新特性
-
-🎨 **UI Revamp**
-
-✨ Fully adapted to the Lobe-UI design system, with refined interaction details
-🌿 Cleaner interface layout for an immersive, distraction-free chat experience
-
-🔌 **Plugin Ecosystem Expansion**
-
-🧩 Natively compatible with official plugin protocols, seamlessly integrating with the NextChat plugin ecosystem
-📦 Pre-installed plugins for drawing, calculations, search, and more, ready to use without configuration
-
-📱 **Smooth Interaction Across Devices**
-
-🔄 Deeply optimized for mobile touch controls with fluid gesture operations
-📲 Responsive layout intelligently adapts to phones, tablets, and desktops for a natural experience everywhere
-
-🌀 **Visualized Thought Chains**
-
-🧠 Supports collapsible thought chains and progressive thinking process display
-🎭 High-visualization interactions designed for complex reasoning scenarios
-
-⚡ **Instant Setup Experience**
-
-🚀 Automatically fetches model lists from server/client APIs
-📦 Smart categorization & quick filtering to start your first conversation in 3 seconds
-
-⚙️ **Flexible Configuration**
-
-🔗 Redesigned `CUSTOM_MODELS` variable logic for seamless server-to-client configuration
-🌐 Local-first principle while fully compatible with web user configurations
-
-🧪 **Smart Model Prober**
-
-✅ Unique multi-protocol testing solution for one-click proxy channel availability check
-🔋 Supports server/client dual-mode health checks for clear stability insights
-
-🖼️ **Model Avatar Workshop**
-
-🎨 Localized avatar matching rule engine with support for regex deep customization
-🔄 Automatically syncs with the official model library, ensuring new models are never "headless"
-
-🚧 **Coming Soon**
-
-🌉 Native multi-channel load balancing (no need to deploy OneAPI/NewAPI)
-🏆 Building an All-in-One smart conversation hub, redefining productivity boundaries
-
-## 🖼️ Interface Preview
-
-![](https://raw.githubusercontent.com/tianzhentech/static/main/images/%7B326DD837-A2FE-4603-A289-47FD5FED329A%7D.png)
-![](https://raw.githubusercontent.com/tianzhentech/static/main/images/%7B1FB6B249-72D5-42F0-B861-7FE95ADCEEEE%7D.png)
-![](https://raw.githubusercontent.com/tianzhentech/static/main/images/%7B6656232E-09F3-472D-A2B4-621DDD57D9CC%7D.png)
-
-![](https://raw.githubusercontent.com/tianzhentech/static/main/images/20250312232933.png)
-
-![](https://raw.githubusercontent.com/tianzhentech/static/main/images/20250312223248.png)
-
-![](https://raw.githubusercontent.com/tianzhentech/static/main/images/20250313011331.png)
-
-> For more details, visit the [Demo Site](https://nc.tianz.me)
 
 ## ⚡ Quick Start
 
@@ -105,11 +43,35 @@ All categories:
 | SiliconCloud  | `siliconcloud`       | Perplexity  | `perplexity`       |
 | Stability     | `stability`          | Flux        | `flux`             |
 
-1. One-click deployment with Vercel: [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/tianzhentech/NeatChat.git)
+1. **Docker (recommended, the only primary way)**: The image is built automatically by GitHub Actions (`.github/workflows/docker.yml`) and pushed to Docker Hub: `limour/next-chat`. Create a `docker-compose.yml`: 
 
-2. For Docker, simply replace the official **yidadaa/chatgpt-next-web:version** with **tianzhentech/chatgpt-next-web:latest**
+```yaml
+version: '3'
+services:
+  next-web:
+    image: limour/next-chat
+    ports:
+      - "3000:3000"
+    environment:
+      - TZ=Asia/Shanghai
+      - BASE_URL=https://xxxx
+      - CUSTOM_MODELS=-all,+gpt-4o-mini@Deepbricks,+ChatGPT@OpenAI,+claude@OpenRouter,+gemini@Vertex
+      - ENABLE_BALANCE_QUERY=1
+      - HOSTNAME=0.0.0.0
+      - DEFAULT_MODEL=ChatGPT
+    restart: unless-stopped
+```
 
-> Other configurations remain consistent with the official version. For detailed usage, refer to [NextChat](https://github.com/ChatGPTNextWeb/ChatGPT-Next-Web)
+Start and visit:
+
+```bash
+docker compose up -d
+# visit http://<server-ip>:3000 in your browser
+```
+
+> See `.env.template` for all other environment variables; other configs remain consistent with the official version. For detailed usage, refer to [NextChat](https://github.com/ChatGPTNextWeb/ChatGPT-Next-Web)
+
+2. ~~One-click deployment with Vercel~~ (scheduled for removal, see `ARCHITECTURE.md` §14): [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/tianzhentech/NeatChat.git)
 
 ## 🚢 Version Notes
 
@@ -119,27 +81,3 @@ All categories:
 | **Stable Release** | ✅ Stable | `vX.Y.Z`                         | ✔️ Production | Born from pre-release stability | Merges features from original mini branch |
 | preview branch | 🚫 Deprecated | -                                | -          | Merged into main branch | Features handled by pre-release |
 | mini branch    | 🚫 Deprecated | -                                | -          | Features integrated into stable version | No longer maintained independently |
-
-## 💝 Sponsorship Support
-
-This project does not seek sponsorship. However, if possible, you can support me with some SiliconFlow or VolcEngine credits. This will help me better support related models and potentially open a public station for those in need. Welcome to sponsor.
-
-| Platform     | Direct Link                                            |
-| ------------ | ----------------------------------------------------- |
-| ✅ SiliconFlow | [Register Here](https://cloud.siliconflow.cn/i/tX3hT0Ly) |
-| 🚀 VolcEngine | [Visit Now](https://volcengine.com/L/i5QyNFSX)         |
-
-
-[![image](https://raw.githubusercontent.com/tianzhentech/static/main/images/20250409181441.png)](https://yxvm.com/)
-
-[NodeSupport](https://github.com/NodeSeekDev/NodeSupport) sponsors this project
-
-<a>
-
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=tianzhentech/NeatChat&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=tianzhentech/NeatChat&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=tianzhentech/NeatChat&type=Date" />
- </picture>
-
-</a>

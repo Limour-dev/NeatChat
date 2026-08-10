@@ -110,9 +110,8 @@ export function ModelConfigList(props: {
         ></input>
       </ListItem>
 
-      {props.modelConfig?.providerName == ServiceProvider.Google ? null : (
-        <>
-          <ListItem
+      <>
+        <ListItem
             title={Locale.Settings.PresencePenalty.Title}
             subTitle={Locale.Settings.PresencePenalty.SubTitle}
           >
@@ -190,7 +189,6 @@ export function ModelConfigList(props: {
             ></input>
           </ListItem>
         </>
-      )}
       <ListItem
         title={Locale.Settings.HistoryCount.Title}
         subTitle={Locale.Settings.HistoryCount.SubTitle}

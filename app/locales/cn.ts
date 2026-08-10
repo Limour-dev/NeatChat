@@ -18,7 +18,7 @@ const cn = {
     Return: "返回",
     Title: "需要密码",
     Tips: "管理员开启了密码验证，请在下方填入访问码",
-    SubTips: "或者输入你的 OpenAI 或 Google AI 密钥",
+    SubTips: "或者输入你的 OpenAI API 密钥",
     Input: "在此处填写访问码",
     Confirm: "确认",
     Later: "稍后再说",
@@ -316,7 +316,7 @@ const cn = {
       },
       CustomEndpoint: {
         Title: "自定义接口",
-        SubTitle: "是否使用自定义 Azure 或 OpenAI 服务",
+        SubTitle: "是否使用自定义 OpenAI 服务",
       },
       Provider: {
         Title: "模型服务商",
@@ -332,175 +332,6 @@ const cn = {
         Endpoint: {
           Title: "接口地址",
           SubTitle: "除默认地址外，必须包含 http(s)://",
-        },
-      },
-      Azure: {
-        ApiKey: {
-          Title: "接口密钥",
-          SubTitle: "使用自定义 Azure Key 绕过密码访问限制",
-          Placeholder: "Azure API Key",
-        },
-
-        Endpoint: {
-          Title: "接口地址",
-          SubTitle: "样例：",
-        },
-
-        ApiVerion: {
-          Title: "接口版本 (azure api version)",
-          SubTitle: "选择指定的部分版本",
-        },
-      },
-      Anthropic: {
-        ApiKey: {
-          Title: "接口密钥",
-          SubTitle: "使用自定义 Anthropic Key 绕过密码访问限制",
-          Placeholder: "Anthropic API Key",
-        },
-
-        Endpoint: {
-          Title: "接口地址",
-          SubTitle: "样例：",
-        },
-
-        ApiVerion: {
-          Title: "接口版本 (claude api version)",
-          SubTitle: "选择一个特定的 API 版本输入",
-        },
-      },
-      Google: {
-        ApiKey: {
-          Title: "API 密钥",
-          SubTitle: "从 Google AI 获取您的 API 密钥",
-          Placeholder: "Google AI API KEY",
-        },
-
-        Endpoint: {
-          Title: "终端地址",
-          SubTitle: "示例：",
-        },
-
-        ApiVersion: {
-          Title: "API 版本（仅适用于 gemini-pro）",
-          SubTitle: "选择一个特定的 API 版本",
-        },
-        GoogleSafetySettings: {
-          Title: "Google 安全过滤级别",
-          SubTitle: "设置内容过滤级别",
-        },
-      },
-      Baidu: {
-        ApiKey: {
-          Title: "API Key",
-          SubTitle: "使用自定义 Baidu API Key",
-          Placeholder: "Baidu API Key",
-        },
-        SecretKey: {
-          Title: "Secret Key",
-          SubTitle: "使用自定义 Baidu Secret Key",
-          Placeholder: "Baidu Secret Key",
-        },
-        Endpoint: {
-          Title: "接口地址",
-          SubTitle: "不支持自定义前往.env配置",
-        },
-      },
-      Tencent: {
-        ApiKey: {
-          Title: "API Key",
-          SubTitle: "使用自定义腾讯云API Key",
-          Placeholder: "Tencent API Key",
-        },
-        SecretKey: {
-          Title: "Secret Key",
-          SubTitle: "使用自定义腾讯云Secret Key",
-          Placeholder: "Tencent Secret Key",
-        },
-        Endpoint: {
-          Title: "接口地址",
-          SubTitle: "不支持自定义前往.env配置",
-        },
-      },
-      ByteDance: {
-        ApiKey: {
-          Title: "接口密钥",
-          SubTitle: "使用自定义 ByteDance API Key",
-          Placeholder: "ByteDance API Key",
-        },
-        Endpoint: {
-          Title: "接口地址",
-          SubTitle: "样例：",
-        },
-      },
-      Alibaba: {
-        ApiKey: {
-          Title: "接口密钥",
-          SubTitle: "使用自定义阿里云API Key",
-          Placeholder: "Alibaba Cloud API Key",
-        },
-        Endpoint: {
-          Title: "接口地址",
-          SubTitle: "样例：",
-        },
-      },
-      Moonshot: {
-        ApiKey: {
-          Title: "接口密钥",
-          SubTitle: "使用自定义月之暗面API Key",
-          Placeholder: "Moonshot API Key",
-        },
-        Endpoint: {
-          Title: "接口地址",
-          SubTitle: "样例：",
-        },
-      },
-      XAI: {
-        ApiKey: {
-          Title: "接口密钥",
-          SubTitle: "使用自定义XAI API Key",
-          Placeholder: "XAI API Key",
-        },
-        Endpoint: {
-          Title: "接口地址",
-          SubTitle: "样例：",
-        },
-      },
-      ChatGLM: {
-        ApiKey: {
-          Title: "接口密钥",
-          SubTitle: "使用自定义 ChatGLM API Key",
-          Placeholder: "ChatGLM API Key",
-        },
-        Endpoint: {
-          Title: "接口地址",
-          SubTitle: "样例：",
-        },
-      },
-      Stability: {
-        ApiKey: {
-          Title: "接口密钥",
-          SubTitle: "使用自定义 Stability API Key",
-          Placeholder: "Stability API Key",
-        },
-        Endpoint: {
-          Title: "接口地址",
-          SubTitle: "样例：",
-        },
-      },
-      Iflytek: {
-        ApiKey: {
-          Title: "ApiKey",
-          SubTitle: "从讯飞星火控制台获取的 APIKey",
-          Placeholder: "APIKey",
-        },
-        ApiSecret: {
-          Title: "ApiSecret",
-          SubTitle: "从讯飞星火控制台获取的 APISecret",
-          Placeholder: "APISecret",
-        },
-        Endpoint: {
-          Title: "接口地址",
-          SubTitle: "样例：",
         },
       },
       CustomModel: {
@@ -652,16 +483,6 @@ const cn = {
         Title: "API Key",
         SubTitle: "API Key",
         Placeholder: "API Key",
-      },
-      Azure: {
-        Endpoint: {
-          Title: "接口地址",
-          SubTitle: "接口地址",
-        },
-        Deployment: {
-          Title: "部署名称",
-          SubTitle: "部署名称",
-        },
       },
       Temperature: {
         Title: "随机性 (temperature)",

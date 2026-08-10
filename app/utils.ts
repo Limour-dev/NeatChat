@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import { showToast } from "./components/ui-lib";
 import Locale from "./locales";
 import { RequestMessage } from "./client/api";
-// import { fetch as tauriFetch, ResponseType } from "@tauri-apps/api/http";
-import { fetch as tauriStreamFetch } from "./utils/stream";
 import { ServiceProvider } from "./constant";
 
 export function trimTopic(topic: string) {
@@ -20,11 +18,7 @@ export function trimTopic(topic: string) {
 
 export async function copyToClipboard(text: string) {
   try {
-    if (window.__TAURI__) {
-      window.__TAURI__.writeText(text);
-    } else {
-      await navigator.clipboard.writeText(text);
-    }
+    await navigator.clipboard.writeText(text);
 
     showToast(Locale.Copy.Success);
   } catch (error) {
@@ -44,46 +38,19 @@ export async function copyToClipboard(text: string) {
 }
 
 export async function downloadAs(text: string, filename: string) {
-  if (window.__TAURI__) {
-    const result = await window.__TAURI__.dialog.save({
-      defaultPath: `${filename}`,
-      filters: [
-        {
-          name: `${filename.split(".").pop()} files`,
-          extensions: [`${filename.split(".").pop()}`],
-        },
-        {
-          name: "All Files",
-          extensions: ["*"],
-        },
-      ],
-    });
+  const element = document.createElement("a");
+  element.setAttribute(
+    "href",
+    "data:text/plain;charset=utf-8," + encodeURIComponent(text),
+  );
+  element.setAttribute("download", filename);
 
-    if (result !== null) {
-      try {
-        await window.__TAURI__.fs.writeTextFile(result, text);
-        showToast(Locale.Download.Success);
-      } catch (error) {
-        showToast(Locale.Download.Failed);
-      }
-    } else {
-      showToast(Locale.Download.Failed);
-    }
-  } else {
-    const element = document.createElement("a");
-    element.setAttribute(
-      "href",
-      "data:text/plain;charset=utf-8," + encodeURIComponent(text),
-    );
-    element.setAttribute("download", filename);
+  element.style.display = "none";
+  document.body.appendChild(element);
 
-    element.style.display = "none";
-    document.body.appendChild(element);
+  element.click();
 
-    element.click();
-
-    document.body.removeChild(element);
-  }
+  document.body.removeChild(element);
 }
 
 export function readFromFile() {
@@ -308,9 +275,6 @@ export function fetch(
   url: string,
   options?: Record<string, unknown>,
 ): Promise<any> {
-  if (window.__TAURI__) {
-    return tauriStreamFetch(url, options);
-  }
   return window.fetch(url, options);
 }
 
@@ -398,29 +362,6 @@ export function getOperationId(operation: {
     operation?.operationId ||
     `${operation.method.toUpperCase()}${operation.path.replaceAll("/", "_")}`
   );
-}
-
-export function clientUpdate() {
-  // this a wild for updating client app
-  return window.__TAURI__?.updater
-    .checkUpdate()
-    .then((updateResult) => {
-      if (updateResult.shouldUpdate) {
-        window.__TAURI__?.updater
-          .installUpdate()
-          .then((result) => {
-            showToast(Locale.Settings.Update.Success);
-          })
-          .catch((e) => {
-            console.error("[Install Update Error]", e);
-            showToast(Locale.Settings.Update.Failed);
-          });
-      }
-    })
-    .catch((e) => {
-      console.error("[Check Update Error]", e);
-      showToast(Locale.Settings.Update.Failed);
-    });
 }
 
 // https://gist.github.com/iwill/a83038623ba4fef6abb9efca87ae9ccb

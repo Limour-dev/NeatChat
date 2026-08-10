@@ -1,6 +1,4 @@
-import tauriConfig from "../../src-tauri/tauri.conf.json";
 import { DEFAULT_INPUT_TEMPLATE } from "../constant";
-
 export const getBuildConfig = () => {
   if (typeof process === "undefined") {
     throw Error(
@@ -9,8 +7,7 @@ export const getBuildConfig = () => {
   }
 
   const buildMode = process.env.BUILD_MODE ?? "standalone";
-  const isApp = !!process.env.BUILD_APP;
-  const version = "v" + tauriConfig.package.version;
+  const version = "v1.2.0"; // TODO: 与发布版本保持一致，发版时手动更新
 
   const commitInfo = (() => {
     try {

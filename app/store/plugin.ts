@@ -4,7 +4,7 @@ import { nanoid } from "nanoid";
 import { createPersistStore } from "../utils/store";
 import { getClientConfig } from "../config/client";
 import yaml from "js-yaml";
-import { adapter, getOperationId } from "../utils";
+import { getOperationId } from "../utils";
 import { useAccessStore } from "./access";
 
 const isApp = getClientConfig()?.isApp !== false;
@@ -71,7 +71,7 @@ export const FunctionToolService = {
     const api = new OpenAPIClientAxios({
       definition: yaml.load(plugin.content) as any,
       axiosConfigDefaults: {
-        adapter: (window.__TAURI__ ? adapter : ["xhr"]) as any,
+        adapter: ["xhr"] as any,
         baseURL,
         headers,
       },

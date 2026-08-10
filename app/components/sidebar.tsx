@@ -194,12 +194,10 @@ export function SideBarHeader(props: {
         className={clsx(styles["sidebar-header"], {
           [styles["sidebar-header-narrow"]]: shouldNarrow,
         })}
-        data-tauri-drag-region
       >
         <div className={styles["sidebar-title-container"]}>
           <div
             className={clsx(styles["sidebar-title"], "logo-text")}
-            data-tauri-drag-region
             style={{ visibility: "visible" }}
           >
             {title}
