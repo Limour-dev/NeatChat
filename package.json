@@ -4,13 +4,13 @@
   "license": "mit",
   "scripts": {
     "mask": "npx tsx app/masks/build.ts",
-    "mask:watch": "npx watch \"yarn mask\" app/masks",
-    "dev": "concurrently -r \"yarn run mask:watch\" \"next dev\"",
-    "build": "yarn mask && next build",
+    "mask:watch": "npx watch \"npm run mask\" app/masks",
+    "dev": "concurrently -r \"npm run mask:watch\" \"next dev\"",
+    "build": "npm run mask && next build",
     "start": "next start",
     "lint": "next lint",
     "prompts": "node ./scripts/fetch-prompts.mjs",
-    "proxy-dev": "sh ./scripts/init-proxy.sh && proxychains -f ./scripts/proxychains.conf yarn dev",
+    "proxy-dev": "sh ./scripts/init-proxy.sh && proxychains -f ./scripts/proxychains.conf npm run dev",
     "test": "jest --watch",
     "test:ci": "jest --ci"
   },
@@ -64,6 +64,5 @@
     "typescript": "5.2.2",
     "watch": "^1.0.2",
     "webpack": "^5.88.1"
-  },
-  "packageManager": "yarn@1.22.19"
+  }
 }

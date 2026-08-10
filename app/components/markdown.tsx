@@ -6,7 +6,7 @@ import RehypeKatex from "rehype-katex";
 import RemarkGfm from "remark-gfm";
 import RehypeRaw from "rehype-raw";
 import RehypeHighlight from "rehype-highlight";
-import { useRef, useState, RefObject, useEffect } from "react";
+import { useRef, useState, RefObject, useEffect, useMemo } from "react";
 import { copyToClipboard, useWindowSize } from "../utils";
 import mermaid from "mermaid";
 import Locale from "../locales";
@@ -405,7 +405,8 @@ ${quotedContent}
 }
 
 function _MarkDownContent(props: { content: string }) {
-      // 尝试匹配完整的 JSON 字符串模式
+  const escapedContent = useMemo(() => {
+    // 尝试匹配完整的 JSON 字符串模式
       const jsonRegex = /(\{.*"type"\s*:\s*"base64_image".*?\})/;
       const jsonMatch = jsonRegex.exec(props.content);
 
@@ -442,7 +443,6 @@ function _MarkDownContent(props: { content: string }) {
         // 找到了 base64 图像数据
         return `![Generated Image](${match2[1]})`;
       }
-    }
 
     const processedContent = props.content;
     return tryWrapHtmlCode(formatThinkText(escapeBrackets(processedContent)));

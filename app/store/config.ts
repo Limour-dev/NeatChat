@@ -1,5 +1,6 @@
 import { LLMModel } from "../client/api";
 import { DalleSize, DalleQuality, DalleStyle } from "../typing";
+import { getClientConfig } from "../config/client";
 import {
   DEFAULT_INPUT_TEMPLATE,
   DEFAULT_MODELS,
@@ -10,11 +11,21 @@ import {
 import { createPersistStore } from "../utils/store";
 
 export type ModelType = (typeof DEFAULT_MODELS)[number]["name"];
+
+export enum SubmitKey {
+  Enter = "Enter",
+  CtrlEnter = "Ctrl + Enter",
+  ShiftEnter = "Shift + Enter",
+  AltEnter = "Alt + Enter",
+  MetaEnter = "Meta + Enter",
+}
+
 export enum Theme {
-  Auto = "auto",
   Dark = "dark",
   Light = "light",
 }
+
+const config = getClientConfig();
 
 
 export type ModelConfig = {

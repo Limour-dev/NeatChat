@@ -125,6 +125,7 @@ export class ClientApi {
     console.log("[Share]", messages, msgs);
     const proxyUrl = "/sharegpt";
     const shareUrl = proxyUrl;
+    const res = await fetch(shareUrl, {
       body: JSON.stringify({
         avatarUrl,
         items: msgs,

@@ -25,6 +25,7 @@ declare global {
       // custom template for preprocessing user input
       DEFAULT_INPUT_TEMPLATE?: string;
     }
+  }
 }
 
 const ACCESS_CODES = (function getAccessCodes(): Set<string> {

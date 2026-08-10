@@ -311,7 +311,7 @@ OpenAI URL/Key、`useCustomConfig`、访问码；全局配置（主题、模型�
 
 - **测试**：Jest + Testing Library（`jest.config.ts`，jsdom 环境），现有
   `test/model-provider.test.ts`（`getModelProvider` 解析）、`test/sum-module.test.ts`；
-  `yarn test:ci` 用于 CI。
+  `npm run test:ci` 用于 CI。
 - **Lint/格式化**：ESLint + Prettier。
 - **i18n**：`app/locales/`（cn/en），`merge(fallback, target)` 保证缺字段回退。
 - **CI/CD**：`.github/workflows/docker.yml` 构建 Docker 镜像；
@@ -360,5 +360,5 @@ OpenAI URL/Key、`useCustomConfig`、访问码；全局配置（主题、模型�
 验收标准：
 
 - `docker compose up -d` 后浏览器可直接访问并使用（参考 README 示例）
-- `yarn build`（standalone）为唯一构建路径
+- `npm run build`（standalone）为唯一构建路径
 - `.github/workflows/docker.yml` 为唯一发布通道，镜像推送 `limour/next-chat`

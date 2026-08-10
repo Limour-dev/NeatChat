@@ -6,11 +6,11 @@ RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
 
-COPY package.json yarn.lock ./
+COPY package.json package-lock.json ./
 
-# RUN echo "Current registry:" && yarn config get registry
-# RUN yarn config set registry 'https://mirrors.huaweicloud.com/repository/npm'
-RUN yarn install
+# RUN echo "Current registry:" && npm config get registry
+# RUN npm config set registry 'https://mirrors.huaweicloud.com/repository/npm'
+RUN npm ci
 
 FROM base AS builder
 
@@ -22,7 +22,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-RUN yarn build
+RUN npm run build
 
 FROM base AS runner
 WORKDIR /app

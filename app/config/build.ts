@@ -33,6 +33,7 @@ export const getBuildConfig = () => {
     version,
     ...commitInfo,
     template: process.env.DEFAULT_INPUT_TEMPLATE ?? DEFAULT_INPUT_TEMPLATE,
+  };
 };
 
 export type BuildConfig = ReturnType<typeof getBuildConfig>;
