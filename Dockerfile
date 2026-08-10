@@ -22,7 +22,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-RUN npm run build
+RUN npx next build --no-lint
 
 FROM base AS runner
 WORKDIR /app
