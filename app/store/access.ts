@@ -11,7 +11,7 @@ import { getModelProvider } from "../utils/model";
 
 let fetchState = 0; // 0 not fetch, 1 fetching, 2 done
 
-const DEFAULT_OPENAI_URL = ApiPath.OpenAI;
+const DEFAULT_OPENAI_URL: string = ApiPath.OpenAI;
 
 
 

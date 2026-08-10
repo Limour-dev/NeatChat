@@ -79,20 +79,6 @@ export abstract class LLMApi {
   abstract usage(): Promise<LLMUsage>;
   abstract models(): Promise<LLMModel[]>;
 }
-
-interface ChatProvider {
-  name: ProviderName;
-  apiConfig: {
-    baseUrl: string;
-    apiKey: string;
-    summaryModel: Model;
-  };
-  models: Model[];
-
-  chat: () => void;
-  usage: () => void;
-}
-
 export class ClientApi {
   public llm: LLMApi;
 
@@ -170,7 +156,8 @@ export function getHeaders(ignoreHeaders: boolean = false) {
 
   function getConfig() {
     const modelConfig = chatStore.currentSession().mask.modelConfig;
-    const isEnabledAccessControl = accessStore.enabledAccessControl();
+    // 直接读取 needCode，避免调用 enabledAccessControl() 触发 fetch() 造成无限递归
+    const isEnabledAccessControl = accessStore.needCode;
     const apiKey = accessStore.openaiApiKey;
     return {
       apiKey,

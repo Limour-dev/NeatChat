@@ -10,3 +10,10 @@ declare module "*.scss" {
 
 declare module "*.svg";
 
+declare global {
+  interface Window {
+    _SW_ENABLED?: boolean;
+  }
+}
+
+export {};

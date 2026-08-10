@@ -42,6 +42,7 @@ import Locale, {
   getLang,
 } from "../locales";
 import { copyToClipboard, semverCompare } from "../utils";
+import { useServerCustomModels } from "../utils/hooks";
 import Link from "next/link";
 import {
   OPENAI_BASE_URL,

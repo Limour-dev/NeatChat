@@ -1,4 +1,5 @@
 import { useDebouncedCallback } from "use-debounce";
+import clsx from "clsx";
 import React, {
   useState,
   useRef,
@@ -96,6 +97,7 @@ import { ContextPrompts, MaskAvatar, MaskConfig } from "./mask";
 import { useMaskStore } from "../store/mask";
 import { useChatCommand, useCommand } from "../command";
 import { prettyObject } from "../utils/format";
+import { getModelProvider } from "../utils/model";
 import { ExportMessageModal } from "./exporter";
 import { useAllModels } from "../utils/hooks";
 import { MultimodalContent } from "../client/api";
@@ -966,7 +968,7 @@ function _Chat() {
   };
 
   const doSubmit = (userInput: string) => {
-    if (userInput.trim() === "" && isEmpty(attachImages)) return;
+    if (userInput.trim() === "" && attachImages.length === 0) return;
 
     let finalUserInput = userInput;
 
@@ -1312,7 +1314,6 @@ function _Chat() {
   });
 
   // edit / insert message modal
-  const [isEditingMessage, setIsEditingMessage] = useState(false);
 
   // remember unfinished input
   useEffect(() => {
@@ -1476,6 +1477,9 @@ function _Chat() {
   const [editingImageMessageId, setEditingImageMessageId] = useState<
     string | null
   >(null);
+
+  // 消息编辑弹窗状态
+  const [isEditingMessage, setIsEditingMessage] = useState(false);
 
   return (
     <div
