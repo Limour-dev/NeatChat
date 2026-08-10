@@ -81,7 +81,9 @@ export const HTMLPreview = forwardRef<HTMLPreviewHander, HTMLPreviewProps>(
     const srcDoc = useMemo(() => {
       const script = `<script>window.addEventListener("DOMContentLoaded", () => new ResizeObserver((entries) => parent.postMessage({id: '${frameId}', height: entries[0].target.clientHeight}, '*')).observe(document.body))</script>`;
       if (props.code.includes("<!DOCTYPE html>")) {
-        props.code.replace("<!DOCTYPE html>", "<!DOCTYPE html>" + script);
+        // Use the returned value — String.replace returns a new string and
+        // the original is immutable, so discarding it would drop the injected script.
+        return props.code.replace("<!DOCTYPE html>", "<!DOCTYPE html>" + script);
       }
       return script + props.code;
     }, [props.code, frameId]);

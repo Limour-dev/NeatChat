@@ -389,8 +389,7 @@ function useScrollToBottom(
     if (autoScroll && !detach) {
       scrollDomToBottom();
     }
-  });
-
+  }, [autoScroll, detach]);
   return {
     scrollRef,
     autoScroll,
@@ -985,7 +984,15 @@ function ChatInner() {
     ChatControllerPool.stop(session.id, messageId);
   };
 
+  // Guard against self-triggering: only run cleanup once per session id.
+  // The previous dependency on [session] caused an infinite loop because
+  // updateTargetSession mutates the session and re-renders the component.
+  const cleanupSessionRef = useRef<string | null>(null);
+
   useEffect(() => {
+    if (cleanupSessionRef.current === session.id) return;
+    cleanupSessionRef.current = session.id;
+
     chatStore.updateTargetSession(session, (session) => {
       const stopTiming = Date.now() - REQUEST_TIMEOUT_MS;
       session.messages.forEach((m) => {

@@ -366,9 +366,7 @@ export const useChatStore = createPersistStore(
             if (message) {
               botMessage.content = message;
             }
-            get().updateTargetSession(session, (session) => {
-              session.messages = session.messages.concat();
-            });
+            get().markUpdate();
           },
           onFinish(message) {
             botMessage.streaming = false;
@@ -390,9 +388,7 @@ export const useChatStore = createPersistStore(
             botMessage.streaming = false;
             userMessage.isError = !isAborted;
             botMessage.isError = !isAborted;
-            get().updateTargetSession(session, (session) => {
-              session.messages = session.messages.concat();
-            });
+            get().markUpdate();
             ChatControllerPool.remove(
               session.id,
               botMessage.id ?? messageIndex,

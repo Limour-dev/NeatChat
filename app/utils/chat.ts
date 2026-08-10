@@ -23,23 +23,30 @@ export function compressImage(file: Blob, maxSize: number): Promise<string> {
         let height = image.height;
         let quality = 0.9;
         let dataUrl;
+        // Guard against an infinite loop when maxSize is extremely small:
+        // quality bottoms out and dimensions shrink but the dataUrl may never
+        // drop below the threshold. Cap iterations and floor the dimensions.
+        let iterations = 0;
+        const MAX_ITERATIONS = 50;
+        const MIN_DIMENSION = 16;
 
         do {
+          iterations += 1;
           canvas.width = width;
           canvas.height = height;
           ctx?.clearRect(0, 0, canvas.width, canvas.height);
           ctx?.drawImage(image, 0, 0, width, height);
           dataUrl = canvas.toDataURL("image/jpeg", quality);
 
-          if (dataUrl.length < maxSize) break;
+          if (dataUrl.length < maxSize || iterations >= MAX_ITERATIONS) break;
 
           if (quality > 0.5) {
             // Prioritize quality reduction
             quality -= 0.1;
           } else {
             // Then reduce the size
-            width *= 0.9;
-            height *= 0.9;
+            width = Math.max(MIN_DIMENSION, width * 0.9);
+            height = Math.max(MIN_DIMENSION, height * 0.9);
           }
         } while (dataUrl.length > maxSize);
 
