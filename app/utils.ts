@@ -205,8 +205,9 @@ export function getMessageTextContentWithoutThinking(message: RequestMessage) {
       }
     }
   }
-  // 匹配以 <think> 开头，至闭合 </think>之间的内容，如果没有闭合，则匹配到结尾
-  const pattern = /^<think>[\s\S]*?(<\/think>|$)/;
+  // 匹配新的思考标记格式：以  thinking\n 开头，至 \n response\n\n 结束（思考部分），
+  // 保留其后的响应文本。若没有结束标记（思考未完成），则匹配到结尾。
+  const pattern = /^ thinking\n?[\s\S]*?(?:\n response\n\n|\n response\n| response|$)/;
   return content.replace(pattern, "").trim(); // 直接移除匹配的部分
 }
 

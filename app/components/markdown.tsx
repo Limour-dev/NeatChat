@@ -349,10 +349,16 @@ function formatThinkText(text: string): string {
       .join("");
   };
 
-  // 处理正在思考的情况（只有开始标签）
-  if (text.startsWith("<think>") && !text.includes("</think>")) {
-    // 获取 <think> 后的所有内容
-    const thinkContent = text.slice("<think>".length);
+  // 处理正在思考的情况（只有开始标签，响应文本尚未开始）
+  if (
+    text.startsWith(" thinking") &&
+    !text.includes("\n response\n") &&
+    !text.includes(" response")
+  ) {
+    // 获取  thinking 后的所有内容
+    const thinkContent = text
+      .slice(" thinking".length)
+      .replace(/^\n/, "");
 
     // 保存开始时间到localStorage
     try {
@@ -381,9 +387,12 @@ ${quotedContent}
 </details>`;
   }
 
-  // 处理完整的思考过程（有结束标签）
-  const pattern = /^<think>([\s\S]*?)<\/think>/;
-  return text.replace(pattern, (match, thinkContent) => {
+  // 处理完整的思考过程（新格式结束标记：\n response\n\n）
+  const pattern = /^ thinking\n?([\s\S]*?)\n response\n\n/;
+  const match = text.match(pattern);
+  if (match) {
+    const thinkContent = match[1];
+    const restText = text.slice(match[0].length);
     // 转义内容中的HTML标签，但保留代码块，然后给每一行添加引用符号
     const escapedContent = escapeHtmlPreserveCodeBlocks(thinkContent);
     const quotedContent = escapedContent
@@ -400,8 +409,11 @@ ${quotedContent}
 
 ${quotedContent}
 
-</details>`;
-  });
+</details>
+
+${restText}`;
+  }
+  return text;
 }
 
 function _MarkDownContent(props: { content: string }) {

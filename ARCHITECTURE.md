@@ -188,10 +188,18 @@ abstract class LLMApi {
 2. `parseSSE` 由平台层按 `API_FORMAT` 注入解析器：
    - `anthropic-messages`：`content_block_delta`（`text_delta` / `thinking_delta`）；
    - `openai-responses`：`response.output_text.delta` / `response.reasoning_summary_text.delta`；
-   两者都输出 ` thinking\n...` / `\n response\n\n...` 标记给 UI 折叠思考内容。
+   两者都输出 ` thinking\n...`（思考开始） / `\n response\n\n...`（响应开始）标记，
+   思考/响应内容分别以 ` thinking\n` 与 `\n response\n\n` 分隔。
 3. **打字机动画**：`animateResponseText` 用 `requestAnimationFrame` 把累积文本按帧吐出，
    让 `onUpdate` 平滑刷新 UI。
-4. 错误处理：非 200 / 非 SSE 响应 → 收集 body 文本或 JSON 展示给用户；`REQUEST_TIMEOUT_MS` 超时 abort。
+4. **思考内容折叠渲染**（`app/components/markdown.tsx` 的 `formatThinkText`）：
+   - 思考中（` thinking\n` 开头且尚未出现 `\n response\n`）→ 渲染为 `<details open>`
+     "正在思考中..." 折叠块（带思考动画）；
+   - 思考完成（完整匹配 `^ thinking\n?([\s\S]*?)\n response\n\n`）→ 渲染为
+     `<details open>` "已深度思考（含用时）" 折叠块，并拼接其后剩余的响应文本；
+   - 发送回上游时（`app/utils.ts` 的 `getMessageTextContentWithoutThinking`）用
+     同一正则移除思考部分，仅保留响应文本，避免多轮对话携带思考内容。
+5. 错误处理：非 200 / 非 SSE 响应 → 收集 body 文本或 JSON 展示给用户；`REQUEST_TIMEOUT_MS` 超时 abort。
 ---
 
 ## 5. 服务端 API 层（`app/api`）
@@ -234,7 +242,7 @@ abstract class LLMApi {
 - **聊天主界面** `chat.tsx`：消息列表（分页渲染 `CHAT_PAGE_SIZE`）、输入框（自动增高）、
   Prompt 提示、附件上传、图片编辑器、会话配置弹窗、导出分享、快捷键。
 - **Markdown 渲染** `markdown.tsx`：react-markdown + remark-gfm/math + rehype-katex/highlight/raw，
-  支持 Mermaid 图、代码折叠、`<thinking>` 内容折叠、Artifacts 内嵌预览。
+  支持 Mermaid 图、代码折叠、思考内容折叠（`formatThinkText` 按 ` thinking\n` / `\n response\n\n` 标记渲染 `<details>`）、Artifacts 内嵌预览。
 - **Artifacts**：HTML 预览沙箱（iframe srcdoc），可全屏/分享/下载。
 - **通用 UI**：`ui-lib.tsx`（Modal/List/Toast/Selector…）、`button.tsx`、`emoji.tsx`。
 
