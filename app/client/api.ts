@@ -1,4 +1,3 @@
-import { getClientConfig } from "../config/client";
 import {
   ACCESS_CODE_PREFIX,
   ModelProvider,
@@ -146,11 +145,8 @@ export class ClientApi {
     // Please do not modify this message
 
     console.log("[Share]", messages, msgs);
-    const clientConfig = getClientConfig();
     const proxyUrl = "/sharegpt";
-    const rawUrl = "https://sharegpt.com/api/conversations";
-    const shareUrl = clientConfig?.isApp ? rawUrl : proxyUrl;
-    const res = await fetch(shareUrl, {
+    const shareUrl = proxyUrl;
       body: JSON.stringify({
         avatarUrl,
         items: msgs,
@@ -192,8 +188,6 @@ export function getHeaders(ignoreHeaders: boolean = false) {
       Accept: "application/json",
     };
   }
-
-  const clientConfig = getClientConfig();
 
   function getConfig() {
     const modelConfig = chatStore.currentSession().mask.modelConfig;

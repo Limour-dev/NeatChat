@@ -2,14 +2,14 @@
 
 > 本文档深入分析 NeatChat 的代码架构。NeatChat 是基于
 > [ChatGPT-Next-Web (NextChat)](https://github.com/ChatGPTNextWeb/ChatGPT-Next-Web)
-> 深度重构的 AI 对话客户端，当前支持 Web / PWA / Windows / Linux / macOS 多端；
-> 计划收敛为「仅 Linux 下 Docker 启动 + Web 访问」单一方式（见 §14 演进计划）。
+> 深度重构的 AI 对话客户端，当前仅支持「Linux 下 Docker 启动 + Web 访问」单一方式
+>（见 §14 演进计划）。
 
-- 技术栈：Next.js 14 (App Router) + React 18 + TypeScript + Zustand + Tauri 1.x (Rust)
+- 技术栈：Next.js 14 (App Router) + React 18 + TypeScript + Zustand
 - 状态管理：Zustand（`create` + `persist` 中间件）
 - 数据持久化：IndexedDB（`idb-keyval`，localStorage 兜底）
 - 多模态输入：文本、图片（含压缩/上传）、语音（TTS / 实时语音）、文件（Word/PDF/PPT/ZIP）
-- 功能亮点：多模型提供商、插件（OpenAPI 转 function calling）、MCP 工具调用、Stable Diffusion 绘画、Artifacts、实时语音对话、云同步（WebDAV / Upstash）
+- 功能亮点：OpenAI 模型、插件（OpenAPI 转 function calling）、MCP 工具调用、Artifacts、实时语音对话、云同步（WebDAV / Upstash）
 
 ---
 
@@ -17,7 +17,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        浏览器 / PWA                          │
+│                        浏览器 (Web)                         │
 │  ┌───────────────────────────────────────────────────────┐  │
 │  │  UI 层 (app/components)                               │  │
 │  │  chat / settings / mask / plugin / sd / mcp-market /  │  │
@@ -45,24 +45,16 @@
 └──────────────────────────┬──────────────────────────────────┘
                            │ 直接转发
 ┌──────────────────────────▼──────────────────────────────────┐
-│  上游 LLM 提供商 (OpenAI/Azure/Gemini/Claude/文心/豆包/... ) │
+│  上游 LLM 提供商 (OpenAI / OpenAI 兼容网关 / 聚合站) │
 └─────────────────────────────────────────────────────────────┘
 
-（Tauri 桌面端：Rust 侧只提供一个 stream_fetch 命令 + 事件桥，
-  前端 fetch 被替换为 Tauri 调用，绕过浏览器跨域限制）
 ```
+### 构建模式
 
-### 构建模式（双模式）
-
-`app/config/build.ts` 根据 `BUILD_MODE` 产生两种构建：
-
-| 模式 | 说明 | API 走向 |
-|------|------|----------|
-| `standalone`（默认） | 服务端渲染，含 `/api/*` 代理 | 前端 → 本地 `/api/xx` → 上游 |
-| `export`（`BUILD_APP=1`） | 纯静态导出（PWA / Tauri 桌面端） | 前端 → 直接请求上游 `BASE_URL`（借助 Tauri 的 HTTP 能力绕过 CORS） |
+采用单一构建模式：`standalone`（`next.config.mjs` 固定 `output: "standalone"`），
+服务端渲染并包含 `/api/*` 代理：前端 → 本地 `/api/xx` → 上游。
 
 `getClientConfig()` 在客户端读取 `<meta name="config">`（由 `app/layout.tsx` 注入），在服务端直接调用 `getBuildConfig()`；`getServerSideConfig()` 读取 `process.env`（见 `app/config/server.ts`）。
-
 ---
 
 ## 2. 目录结构
@@ -71,28 +63,26 @@
 app/
 ├── page.tsx / layout.tsx        # 根入口 & 根布局（注入 meta config、ServiceWorker、MCP 初始化）
 ├── constant.ts                  # 全局常量：路由、ApiPath、ServiceProvider、模型表、模板
-├── typing.ts / global.d.ts      # 公共类型 & 静态资源/TAURI 全局声明
+├── typing.ts / global.d.ts      # 公共类型 & 静态资源声明
 ├── polyfill.ts                  # Array.prototype.at 垫片
-├── utils.ts                     # 工具桶：剪贴板/下载/消息内容提取/TAURI fetch 适配等
+├── utils.ts                     # 工具桶：剪贴板/下载/消息内容提取等
 ├── command.ts                   # URL 命令（:fill :submit :mask 等）与聊天命令
 ├── config/                      # 构建/客户端/服务端配置
-│   ├── build.ts                 #   构建时配置（版本、commit、buildMode、isApp）
+│   ├── build.ts                 #   构建时配置（版本、commit）
 │   ├── client.ts                #   客户端配置（读 meta 标签）
-│   └── server.ts                #   服务端 env 配置（所有提供商密钥、CODE、CUSTOM_MODELS）
+│   └── server.ts                #   服务端 env 配置（OpenAI 密钥、CODE、CUSTOM_MODELS）
 ├── store/                       # Zustand store（见 §3）
 │   ├── chat.ts access.ts config.ts mask.ts prompt.ts
-│   ├── plugin.ts sync.ts update.ts sd.ts index.ts
+│   ├── plugin.ts sync.ts update.ts index.ts
 ├── client/                      # 客户端 LLM API 抽象（见 §4）
 │   ├── api.ts                   #   LLMApi 抽象类 + ClientApi 工厂 + getHeaders
 │   ├── controller.ts            #   流式请求控制器池（停止/重试）
-│   └── platforms/               #   每个提供商一个实现（openai/google/anthropic/baidu/...）
+│   └── platforms/               #   OpenAI 平台实现
 ├── api/                         # Next.js Route Handlers（Edge runtime）（见 §5）
 │   ├── [provider]/[...path]/route.ts   # 统一路由分发
-│   ├── openai.ts azure.ts google.ts anthropic.ts baidu.ts bytedance.ts
-│   ├── alibaba.ts moonshot.ts iflytek.ts glm.ts xai.ts stability.ts
-│   ├── tencent/route.ts         #   腾讯云签名鉴权（HMAC）
+│   ├── openai.ts common.ts auth.ts proxy.ts
 │   ├── auth.ts                  #   访问码 / APIKey 鉴权 + 注入系统密钥
-│   ├── common.ts                #   OpenAI 系统一代理（含 Azure 适配、模型过滤）
+│   ├── common.ts                #   OpenAI 系统一代理（模型过滤）
 │   ├── config/route.ts          #   下发非敏感服务端配置
 │   ├── proxy/route.ts           #   通用代理（插件用）
 │   ├── webdav/[...path]/route.ts#   云同步 WebDAV 代理（白名单校验）
@@ -110,20 +100,17 @@ app/
 │   ├── exporter.tsx artifacts.tsx image-editor.tsx message-selector.tsx
 │   ├── model-selector-modal.tsx model-config.tsx model-test-button.tsx
 │   ├── realtime-chat/           #   实时语音对话（rt-client + AudioWorklet）
-│   ├── sd/                      #   Stable Diffusion 绘画
 │   ├── voice-print/             #   语音频谱可视化（Canvas）
 │   ├── ui-lib.tsx button.tsx emoji.tsx error.tsx input-range.tsx
 │   └── mcp-market.tsx           #   MCP 服务器市场
 ├── utils/                       # 工具函数（见 §8）
 │   ├── store.ts                 #   createPersistStore（持久化 store 工厂）
 │   ├── chat.ts                  #   SSE 流式请求 + 工具循环 + 图片处理
-│   ├── stream.ts                #   Tauri 流式 fetch 桥
 │   ├── sync.ts                  #   多 store 合并（导出/导入/云同步）
 │   ├── indexedDB-storage.ts     #   IndexedDB 存储适配器
 │   ├── file.ts                  #   文件解析（docx/pdf/pptx/xlsx/zip/图片）
 │   ├── ms_edge_tts.ts           #   Edge TTS（WebSocket 合成语音）
 │   ├── audio.ts lib/audio.ts    #   TTS 播放器 / AudioWorklet 实时音频处理
-│   ├── hmac.ts tencent.ts baidu.ts  #   签名算法（腾讯云 TC3-HMAC-SHA256、百度 OAuth）
 │   ├── cloudflare.ts            #   AI Gateway URL 重写
 │   ├── model.ts model-test.ts token.ts   # 模型收集/测试/Token 估算
 │   └── cloud/                   #   webdav.ts upstash.ts 云同步客户端
@@ -132,10 +119,6 @@ app/
 ├── icons/  styles/  lib/
 └── global.d.ts
 
-src-tauri/                       # Tauri 桌面壳
-├── src/main.rs                  # invoke_handler 注册 stream_fetch + 窗口状态插件
-├── src/stream.rs                # stream_fetch 命令：reqwest 请求并把响应分块 emit 给前端
-└── tauri.conf.json              # 窗口/权限/更新器/打包配置
 
 public/                          # 静态资源：masks.json plugins.json prompts.json，
                                  # serviceWorker.js（图片缓存上传）、mcp.json/mcp_cn.json
@@ -159,13 +142,12 @@ test/                            # Jest 单测
 |-------|-----------|------|
 | `useChatStore` | `chat-next-web-store` | 会话列表、消息流、输入模板填充、上下文组装、自动标题、长短期记忆压缩、MCP 缓存 |
 | `useAppConfig` | `app-config` | 全局配置：主题、模型表、ModelConfig、TTS/Realtime 配置、功能开关 |
-| `useAccessStore` | `access-control` | 各提供商 URL/APIKey、访问码、useCustomConfig、服务端下发的 DangerConfig |
+| `useAccessStore` | `access-control` | OpenAI URL/APIKey、访问码、useCustomConfig、服务端下发的 DangerConfig |
 | `useMaskStore` | `mask-store` | 面具（预设人设/上下文/模型参数）CRUD + 内置面具 |
 | `usePromptStore` | `prompt-store` | 提示词库（内置 + 用户，Fuse.js 搜索） |
 | `usePluginStore` | `chat-next-web-plugin` | 插件（OpenAPI 定义）CRUD，`FunctionToolService` 编译为 tools/funcs |
 | `useSyncStore` | `sync` | WebDAV/Upstash 云同步配置与操作 |
 | `useUpdateStore` | `chat-update` | 版本检查、用量查询 |
-| `useSdStore` | `sd-list` | Stable Diffusion 绘画任务列表 |
 
 ### 3.1 聊天核心流（`useChatStore`）
 
@@ -207,22 +189,18 @@ abstract class LLMApi {
 }
 ```
 
-`ClientApi`（`api.ts`）是工厂：按 `ModelProvider` 选择具体实现（`ChatGPTApi` / `GeminiProApi` /
-`ClaudeApi` / `ErnieApi` / `DoubaoApi` / `QwenApi` / `HunyuanApi` / `MoonshotApi` / `SparkApi` /
-`XAIApi` / `ChatGLMApi`）。`getHeaders()` 根据当前 provider 选择鉴权头
-（`Authorization` / `api-key` / `x-api-key` / `x-goog-api-key`），并支持访问码 `nk-` 前缀。
+`ClientApi`（`api.ts`）是工厂：当前仅 OpenAI 平台（`ChatGPTApi`）。`getHeaders()` 生成
+`Authorization` 头（用户 API Key 或 `nk-` 访问码前缀）。
 
 ### 4.2 地址解析
 
-每个平台实现有自己的 `path()` 逻辑：优先读取 `useAccessStore` 的 `useCustomConfig` 自定义
-URL；否则 Web 模式走 `/api/xxx` 本地代理，App（export）模式直接走 `BASE_URL` 常量；
-最后统一经过 `cloudflareAIGatewayUrl()` 做 AI Gateway URL 重写（可选）。
+`path()` 逻辑：优先读取 `useAccessStore` 的 `useCustomConfig` 自定义 URL；
+否则走 `/api/openai` 本地代理；最后统一经过 `cloudflareAIGatewayUrl()` 做 AI Gateway URL 重写（可选）。
 
 ### 4.3 流式请求与工具循环（`app/utils/chat.ts` 的 `stream()`）
 
-1. 用 `@fortaine/fetch-event-source` 发起 SSE POST（`fetch` 在 App 端被替换为 Tauri 桥）。
-2. `parseSSE` 由各平台提供（OpenAI 解析 `delta.content` / `tool_calls` / `reasoning_content`；
-   Gemini 解析 `candidates`；Claude 解析 `content_block_delta` 等）。
+1. 用 `@fortaine/fetch-event-source` 发起 SSE POST。
+2. `parseSSE` 解析 OpenAI 格式（`delta.content` / `tool_calls` / `reasoning_content`）。
 3. **打字机动画**：`animateResponseText` 用 `requestAnimationFrame` 把累积文本按帧吐出，
    让 `onUpdate` 平滑刷新 UI。
 4. **工具调用循环**：收到 `tool_calls` → 收集到 `runTools` → 流结束后并行执行本地函数
@@ -240,9 +218,8 @@ URL；否则 Web 模式走 `/api/xxx` 本地代理，App（export）模式直接
 ### 5.1 统一路由分发
 
 `/api/[provider]/[...path]/route.ts` 按 `params.provider` 分发到各 handler
-（OpenAI/Azure/Google/Anthropic/Baidu/ByteDance/Alibaba/Moonshot/Stability/Iflytek/XAI/ChatGLM），
-未知 provider 走 `proxyHandler`。`next.config.mjs` 还配置了 `/api/proxy/*` 的
-`rewrites`（OpenAI/Google/Anthropic/Azure/Alibaba 直连上游）。
+（OpenAI / proxy），未知 provider 走 `proxyHandler`。`next.config.mjs` 还配置了
+`/api/proxy/openai/*` 的 `rewrite`（直连上游）。
 
 ### 5.2 鉴权（`auth.ts`）
 
@@ -255,10 +232,8 @@ URL；否则 Web 模式走 `/api/xxx` 本地代理，App（export）模式直接
 
 ### 5.3 OpenAI 系统一代理（`common.ts` `requestOpenai`）
 
-- 识别 Azure 路径（`azure/deployments`），切换 `api-key` 头与 `AZURE_URL`；
 - 支持 `CUSTOM_MODELS` 过滤（`isModelAvailableInServer` 拒绝禁用模型，如 `DISABLE_GPT4`）；
-- 10 分钟超时 abort；清理 `content-encoding` 等响应头以兼容 Vercel gzip；
-- 其余提供商 handler（google/anthropic/baidu/bytedance/...）把请求体转换成各自协议后转发。
+- 10 分钟超时 abort；清理 `content-encoding` 等响应头以兼容上游 gzip。
 
 ### 5.4 云同步代理
 
@@ -284,8 +259,6 @@ URL；否则 Web 模式走 `/api/xxx` 本地代理，App（export）模式直接
 - **Markdown 渲染** `markdown.tsx`：react-markdown + remark-gfm/math + rehype-katex/highlight/raw，
   支持 Mermaid 图、代码折叠、`<thinking>` 内容折叠、Artifacts 内嵌预览。
 - **Artifacts**：HTML 预览沙箱（iframe srcdoc），可全屏/分享/下载。
-- **SD 绘画** `sd/`：参数面板（模型版本/提示词/负向提示/尺寸/CFG/步数等）→
-  `useSdStore.stabilityRequestCall` → `/api/stability`（或直连）→ 结果上传到图片缓存。
 - **Realtime 语音** `realtime-chat/`：基于微软 `rt-client`（Azure 实时音频 SDK）建立
   WebSocket 会话；`app/lib/audio.ts` 的 `AudioHandler` 用 AudioWorklet 录制/播放 24kHz
   PCM 并做频谱分析；`voice-print/` 在 Canvas 上绘制实时频谱。
@@ -305,8 +278,7 @@ URL；否则 Web 模式走 `/api/xxx` 本地代理，App（export）模式直接
 2. `openapi-client-axios` 生成 API client，`getOperations()` 得到每个操作；
 3. 把操作编译为 OpenAI 格式的 `tools`（function schema）与可调用的 `funcs`（返回 Promise）；
 4. 鉴权注入：`authType`（bearer/basic/custom）× `authLocation`（header/query/body）；
-5. Web 模式经 `/api/proxy` 转发（`X-Base-URL` 指定目标），App 模式直连服务端 URL；
-6. 内置插件从 `public/plugins.json` 拉取。
+5. 经 `/api/proxy` 转发（`X-Base-URL` 指定目标）；
 
 chat 发起请求时 `getAsTools(session.mask.plugin)` 取当前面具启用的插件，
 tools 随请求体发送，工具调用结果循环回填（见 §4.3）。
@@ -335,33 +307,21 @@ tools 随请求体发送，工具调用结果循环回填（见 §4.3）。
 | `store.ts` | `createPersistStore` 持久化 store 工厂（见 §3） |
 | `indexedDB-storage.ts` | IndexedDB + localStorage 双通道存储适配器 |
 | `chat.ts` | SSE 流、图片压缩/缓存/上传、base64 转换 |
-| `stream.ts` | Tauri `stream_fetch` 桥：`invoke` 发起请求，`listen("stream-response")` 收块，组装成 Web `Response` |
 | `sync.ts` | 多 store 快照/合并/云同步 |
 | `file.ts` | docx(mammoth)/pdf(pdfjs)/pptx/zip(xlsx 等)/图片 解析提取文本 |
 | `model.ts` | 模型表收集/排序/自定义模型解析（`model@provider` 语法） |
 | `model-test.ts` | 前端模型连通性测试 |
 | `token.ts` | 轻量 token 估算（无 tiktoken，按字符加权） |
-| `hmac.ts` | 纯 JS SHA-256/HMAC-SHA256（腾讯云签名用） |
-| `tencent.ts` | 腾讯云 TC3-HMAC-SHA256 请求头生成 |
-| `baidu.ts` | 百度千帆 OAuth access_token |
 | `cloudflare.ts` | Cloudflare AI Gateway URL 重写 |
 | `ms_edge_tts.ts` | Edge 神经网络 TTS（WebSocket） |
 | `audio.ts` / `lib/audio.ts` | TTS 播放器 / Realtime AudioWorklet 引擎 |
 | `cloud/` | WebDAV、Upstash 同步客户端（含分块上传） |
 | `object.ts clone.ts merge.ts format.ts` | 通用工具（omit/pick/deepClone/merge/chunks/prettyObject） |
 
-### 8.1 双端 fetch 适配（关键设计）
+### 8.1 fetch 适配
 
-`app/utils.ts` 的 `fetch()` 与 `app/utils/stream.ts` 的 `fetch()`（Tauri 版）：
-
-- Web 端：直接 `window.fetch`；
-- Tauri 端：`window.__TAURI__.invoke("stream_fetch", {url, method, headers, body})`
-  → Rust `src/stream.rs` 用 `reqwest` 发起请求（允许任意 https CORS），
-  并把响应体以 `ChunkPayload` 事件逐块 `window.emit("stream-response", ...)` 推回前端；
-  前端监听事件，把字节写入 `TransformStream`，构造一个标准的 `Response` 对象，
-  从而上层 `fetchEventSource` 无需改动即可解析 SSE。
-
-这正是桌面端能直连 OpenAI 等上游且无需本地代理的关键。
+`app/utils.ts` 的 `fetch()`：直接使用全局 `window.fetch`（浏览器 CORS 由本地
+`/api/*` 代理规避）。上层 `fetchEventSource` 无需改动即可解析 SSE。
 
 ### 8.2 图片缓存（ServiceWorker）
 
@@ -381,23 +341,20 @@ tools 随请求体发送，工具调用结果循环回填（见 §4.3）。
 
 ## 10. 配置与环境变量
 
-### 10.1 服务端（`app/config/server.ts`，Docker/Vercel 部署）
+### 10.1 服务端（`app/config/server.ts`，Docker 部署）
 
 `OPENAI_API_KEY`（支持逗号分隔轮询）、`CODE`（访问码，md5 后比较）、`BASE_URL`、
-`AZURE_URL/_API_KEY`、`GOOGLE_API_KEY`、`ANTHROPIC_API_KEY`、`BAIDU_API_KEY/_SECRET_KEY`、
-`BYTEDANCE_API_KEY`、`ALIBABA_API_KEY`、`TENCENT_SECRET_ID/_KEY`、`MOONSHOT_API_KEY`、
-`IFLYTEK_API_KEY/_SECRET`、`XAI_API_KEY`、`CHATGLM_API_KEY`、`STABILITY_API_KEY`、
-`CUSTOM_MODELS`、`DEFAULT_MODEL`、`DISABLE_GPT4`、`HIDE_USER_API_KEY`、
+`OPENAI_ORG_ID`、`CUSTOM_MODELS`、`DEFAULT_MODEL`、`DISABLE_GPT4`、`HIDE_USER_API_KEY`、
 `ENABLE_BALANCE_QUERY`、`DISABLE_FAST_LINK`、`WHITE_WEBDAV_ENDPOINTS`、
 `ENABLE_MCP`、`CLOUDFLARE_*`（KV）、`PROXY_URL`（Docker proxychains）等。
 
 ### 10.2 构建时（`app/config/build.ts`）
 
-`BUILD_MODE=standalone|export`、`BUILD_APP=1`（桌面端）、`DISABLE_CHUNK`。
+固定 `standalone` 模式；版本号硬编码 `v1.2.0`。
 
 ### 10.3 客户端（`app/store/access.ts` + `app/store/config.ts`）
 
-各提供商 URL/Key、`useCustomConfig`、访问码；全局配置（主题、模型、ModelConfig 温度等参数、
+OpenAI URL/Key、`useCustomConfig`、访问码；全局配置（主题、模型、ModelConfig 温度等参数、
 TTS/Realtime 配置、功能开关）。`collectModels` 支持 `customModels` 追加/隐藏
 （`-model` 前缀隐藏）。
 
@@ -411,8 +368,8 @@ TTS/Realtime 配置、功能开关）。`collectModels` 支持 `customModels` �
   → 组装上下文 getMessagesWithMemory（系统提示 + 记忆 + context + 最近消息）
   → getClientApi(provider).llm.chat({...})
       → 平台实现（如 ChatGPTApi.chat）
-          → path() 解析：/api/openai（Web）或 api.openai.com（App/Tauri）
-          → stream() → fetchEventSource（Tauri 桥 or window.fetch）
+          → path() 解析：/api/openai（本地代理）
+          → stream() → fetchEventSource（window.fetch）
               → Next.js /api/[provider] 路由 → auth() 鉴权 → 上游转发
               → SSE 流式返回 → parseSSE → 打字机动画 onUpdate → UI 增量渲染
               → 若含 tool_calls → 本地执行插件/MCP → 回填后重新请求
@@ -430,14 +387,14 @@ TTS/Realtime 配置、功能开关）。`collectModels` 支持 `customModels` �
 - **Lint/格式化**：ESLint + Prettier + husky + lint-staged。
 - **i18n**：`app/locales/`（cn/en），`merge(fallback, target)` 保证缺字段回退。
 - **CI/CD**：`.github/workflows/docker.yml` 构建 Docker 镜像；
-  `Dockerfile` 为 standalone 输出 + proxychains 代理支持；Vercel 直接部署。
+  `Dockerfile` 为 standalone 输出 + proxychains 代理支持。
 
 ---
 
 ## 13. 关键设计决策与扩展点
 
-1. **双构建模式**是"一套代码三端（Web/Serverless/桌面）"的基础：Web 用服务端代理隐藏密钥，
-   桌面/PWA 用 Tauri 网络能力直连。
+1. **单一构建模式**（standalone + Docker）是"一套代码服务端/浏览器"的基础：服务端代理隐藏密钥，
+   浏览器经本地 `/api/*` 访问上游。
 2. **Provider 插件化**：新增模型提供商 = 在 `constant.ts` 加模型表 + `app/client/platforms/`
    加一个实现 + `app/api/` 加一个 handler（或复用 openai 兼容协议）+ `access.ts` 加配置项，
    其余（UI、记忆、插件、导出）全部复用。
@@ -452,19 +409,19 @@ TTS/Realtime 配置、功能开关）。`collectModels` 支持 `customModels` �
 
 ## 14. 演进计划：收敛为「Linux Docker + Web 访问」单一部署方式
 
-> 目标：移除桌面端（Tauri）、PWA 静态导出、Vercel 等其它使用/部署方式，
+> 已完成：移除桌面端（Tauri）、PWA 静态导出、Vercel 等其它使用/部署方式，
 > 仅保留「Linux 上运行 Docker 镜像（`limour/next-chat`）+ 浏览器访问」这一种方式，
 > 降低代码复杂度与维护成本。镜像由 `.github/workflows/docker.yml` 在
 > `release` 发布或手动触发（`workflow_dispatch`）时构建并推送到 Docker Hub。
 
-### 14.1 现状（待移除项）
+### 14.1 现状（已收敛）
 
 | 使用方式 | 载体 | 核心代码/配置 | 状态 |
 |---------|------|--------------|------|
 | Web（standalone + Docker） | Next.js SSR + `/api/*` 代理 | `app/api`、`Dockerfile`、`docker-compose.yml` | ✅ 保留（唯一目标） |
 | 桌面端（Tauri） | Rust 壳 + 静态导出 | `src-tauri/`、`app/utils/stream.ts`、`BUILD_APP=1`、`app:build` | ✅ 已移除（v1.2.0） |
-| PWA / 静态导出 | `BUILD_MODE=export` | `app/config/build.ts`、`next.config.mjs`（`output: export`） | ❌ 待移除 |
-| Vercel 部署 | Serverless | README 按钮、`vercel.json` | ❌ 待移除（可选） |
+| PWA / 静态导出 | `BUILD_MODE=export` | `app/config/build.ts`、`next.config.mjs`（`output: export`） | ✅ 已移除 |
+| Vercel 部署 | Serverless | README 按钮、`vercel.json` | ✅ 已移除 |
 
 ### 14.1.1 模型平台收敛（已完成）
 
@@ -493,26 +450,26 @@ TTS/Realtime 配置、功能开关）。`collectModels` 支持 `customModels` �
 - [x] 删除 `app/utils/stream.ts`（Tauri `stream_fetch` 桥），`app/utils/chat.ts` 恢复直接使用全局 `fetch`
 - [x] 删除 `app/global.d.ts` 中 `__TAURI__` 类型声明；清理 `app/store/update.ts`、`app/store/plugin.ts`、`app/utils.ts`、`app/components/exporter.tsx` 中的 `window.__TAURI__` 分支
 - [x] 移除 Tauri 更新器（updater pubkey 签名校验）与 `clientUpdate()`；`app/config/build.ts` 版本号改为硬编码
-- [ ] `app/config/build.ts`：移除 `BUILD_APP=1` / `isApp` 逻辑（**挂起**：`isApp` 仍被 export/PWA 模式使用，待 Phase 2 一并移除）
+- [x] `app/config/build.ts`：移除 `BUILD_APP=1` / `isApp` 逻辑（随 Phase 2 一并移除）
 
-**Phase 2：移除 export 静态构建（PWA）**
+**Phase 2：移除 export 静态构建（PWA）** ✅ 已完成
 
-- [ ] `package.json`：删除 `export`、`export:dev`、`app:dev` 脚本，仅保留 `build`（standalone）
-- [ ] `app/config/build.ts`：`BUILD_MODE` 固定为 `standalone`，删除 export 分支
-- [ ] `app/store/access.ts` 及各 `app/client/platforms/*.ts`：删除 `isApp` 三目分支，URL 一律走本地 `/api/xx` 代理
-- [ ] `app/locales/{cn,en}.ts`、`app/store/sync.ts`、`app/store/config.ts`、`app/store/update.ts`：删除 `isApp` 相关分支
-- [ ] `next.config.mjs`：移除 `output: export`、`images.unoptimized`、`LimitChunkCountPlugin`（DISABLE_CHUNK）等 export-only 配置
+- [x] `package.json`：删除 `export`、`export:dev`、`app:dev` 脚本，仅保留 `build`（standalone）
+- [x] `app/config/build.ts`：`BUILD_MODE` 固定为 `standalone`，删除 export 分支
+- [x] `app/store/access.ts` 及各 `app/client/platforms/*.ts`：删除 `isApp` 三目分支，URL 一律走本地 `/api/xx` 代理
+- [x] `app/locales/{cn,en}.ts`、`app/store/sync.ts`、`app/store/config.ts`、`app/store/update.ts`：删除 `isApp` 相关分支
+- [x] `next.config.mjs`：移除 `output: export`、`images.unoptimized`、`LimitChunkCountPlugin`（DISABLE_CHUNK）等 export-only 配置
 
-**Phase 3：移除 Vercel 部署（可选）**
+**Phase 3：移除 Vercel 部署** ✅ 已完成
 
-- [ ] 删除 `vercel.json`；README 移除 Vercel 按钮与说明
-- [ ] 评估 `@vercel/analytics` / `@vercel/speed-insights` 依赖的去留
+- [x] 删除 `vercel.json`；README 移除 Vercel 按钮与说明
+- [x] 移除 `@vercel/analytics` / `@vercel/speed-insights` 依赖（连同 `@next/third-parties` 与死代码 `app/utils/auth-settings-events.ts`）
 
-**Phase 4：文档与 CI 收敛**
+**Phase 4：文档与 CI 收敛** ✅ 已完成
 
-- [ ] `ARCHITECTURE.md`：删除 §1 双模式/Tauri 描述、§8.1 双端 fetch 适配、§9 桌面端章节，统一为「Docker standalone + Web」
-- [ ] README：移除 Windows / macOS / PWA 徽章与 Vercel 一段，仅保留 Docker 启动说明
-- [ ] `.github/workflows/docker.yml` 保持不变（已是唯一发布通道）
+- [x] `ARCHITECTURE.md`：删除 §1 双模式/Tauri 描述、§8.1 双端 fetch 适配、§9 桌面端章节，统一为「Docker standalone + Web」
+- [x] README：移除 Windows / macOS / PWA 徽章与 Vercel 一段，仅保留 Docker 启动说明
+- [x] `.github/workflows/docker.yml` 保持不变（已是唯一发布通道）
 
 ### 14.3 目标架构（收敛后）
 
@@ -538,6 +495,6 @@ TTS/Realtime 配置、功能开关）。`collectModels` 支持 `customModels` �
 ### 14.4 验收标准
 
 - [ ] `docker compose up -d` 后浏览器可直接访问并使用（参考 README 示例）
-- [ ] `yarn build`（standalone）为唯一构建路径，`yarn export` / `tauri build` 不复存在
-- [ ] 代码库中不再出现 `__TAURI__`、`BUILD_APP`、`src-tauri` 等痕迹
-- [ ] `.github/workflows/docker.yml` 为唯一发布通道，镜像推送 `limour/next-chat`
+- [x] `yarn build`（standalone）为唯一构建路径，`yarn export` / `tauri build` 不复存在
+- [x] 代码库中不再出现 `__TAURI__`、`BUILD_APP`、`src-tauri` 等痕迹
+- [x] `.github/workflows/docker.yml` 为唯一发布通道，镜像推送 `limour/next-chat`

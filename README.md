@@ -5,13 +5,8 @@
 
 ![Stars](https://img.shields.io/github/stars/tianzhentech/neatchat)
 ![Forks](https://img.shields.io/github/forks/tianzhentech/neatchat)
-![Web](https://img.shields.io/badge/Web-PWA-orange?logo=microsoftedge)
 ![Release Badge](https://img.shields.io/github/v/release/tianzhentech/neatchat.svg)
 ![License](https://img.shields.io/github/license/tianzhentech/neatchat.svg)
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/tianzhentech/NeatChat.git)
-
-
 
 简体中文 | [English](README.en.md)
 
@@ -72,7 +67,6 @@ docker compose up -d
 
 > 其余环境变量见 `.env.template`；其余配置与官方一致，详细使用请参考[NextChat](https://github.com/ChatGPTNextWeb/ChatGPT-Next-Web)
 
-2. ~~支持vercel一键部署~~（已列入移除计划，见 `ARCHITECTURE.md` §14）：[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/tianzhentech/NeatChat.git)
 
 ## 🚢 版本说明
 

@@ -1,6 +1,5 @@
 import { LLMModel } from "../client/api";
 import { DalleSize, DalleQuality, DalleStyle } from "../typing";
-import { getClientConfig } from "../config/client";
 import {
   DEFAULT_INPUT_TEMPLATE,
   DEFAULT_MODELS,
@@ -36,7 +35,6 @@ export enum Theme {
   Light = "light",
 }
 
-const config = getClientConfig();
 
 export type ModelConfig = {
   model: ModelType;
@@ -94,7 +92,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   fontSize: 14,
   fontFamily: "",
   theme: Theme.Auto,
-  tightBorder: !!config?.isApp,
+  tightBorder: false,
   sendPreviewBubble: true,
   enableAutoGenerateTitle: true,
   sidebarWidth: DEFAULT_SIDEBAR_WIDTH,

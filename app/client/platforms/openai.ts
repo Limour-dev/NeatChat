@@ -2,7 +2,6 @@
 // azure and openai, using same models. so using same LLMApi.
 import {
   ApiPath,
-  OPENAI_BASE_URL,
   DEFAULT_MODELS,
   OpenaiPath,
   REQUEST_TIMEOUT_MS,
@@ -33,7 +32,6 @@ import {
   SpeechOptions,
 } from "../api";
 import Locale from "../../locales";
-import { getClientConfig } from "@/app/config/client";
 import {
   getMessageTextContent,
   isVisionModel,
@@ -89,8 +87,7 @@ export class ChatGPTApi implements LLMApi {
     }
 
     if (baseUrl.length === 0) {
-      const isApp = !!getClientConfig()?.isApp;
-      baseUrl = isApp ? OPENAI_BASE_URL : ApiPath.OpenAI;
+      baseUrl = ApiPath.OpenAI;
     }
 
     if (baseUrl.endsWith("/")) {

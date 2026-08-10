@@ -1,12 +1,10 @@
 import styles from "./auth.module.scss";
 import { IconButton } from "./button";
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Path } from "../constant";
 import { useAccessStore } from "../store";
 import Locale from "../locales";
 import NeatIcon from "../icons/neat.svg";
-import { getClientConfig } from "../config/client";
 import { PasswordInput } from "./ui-lib";
 import LeftIcon from "@/app/icons/left.svg";
 import clsx from "clsx";
@@ -22,13 +20,6 @@ export function AuthPage() {
       access.accessCode = "";
     });
   };
-
-  useEffect(() => {
-    if (getClientConfig()?.isApp) {
-      navigate(Path.Settings);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   return (
     <div className={styles["auth-page"]}>

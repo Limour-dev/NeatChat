@@ -1,18 +1,10 @@
-import { getClientConfig } from "../config/client";
 import { SubmitKey } from "../store/config";
-
-const isApp = !!getClientConfig()?.isApp;
 
 const cn = {
   WIP: "该功能仍在开发中……",
   Error: {
-    Unauthorized: isApp
-      ? `😆 对话遇到了一些问题，不用慌:
-       \\ 1️⃣ 如果你想消耗自己的 API 资源，点击[这里](/#/settings)修改设置 ⚙️`
-      : `😆 对话遇到了一些问题，不用慌:
-       \ 1️⃣ 点击[这里](/#/auth)输入访问秘钥 🔑
-       \ 2️⃣ 如果你想消耗自己的 API 资源，点击[这里](/#/settings)修改设置 ⚙️
-       `,
+    Unauthorized: `😆 对话遇到了一些问题，不用慌:
+       \ 1️⃣ 如果你想消耗自己的 API 资源，点击[这里](/#/settings)修改设置 ⚙️`,
   },
   Auth: {
     Return: "返回",

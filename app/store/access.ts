@@ -2,10 +2,8 @@ import {
   ServiceProvider,
   StoreKey,
   ApiPath,
-  OPENAI_BASE_URL,
 } from "../constant";
 import { getHeaders } from "../client/api";
-import { getClientConfig } from "../config/client";
 import { createPersistStore } from "../utils/store";
 import { ensure } from "../utils/clone";
 import { DEFAULT_CONFIG } from "./config";
@@ -13,9 +11,7 @@ import { getModelProvider } from "../utils/model";
 
 let fetchState = 0; // 0 not fetch, 1 fetching, 2 done
 
-const isApp = getClientConfig()?.buildMode === "export";
-
-const DEFAULT_OPENAI_URL = isApp ? OPENAI_BASE_URL : ApiPath.OpenAI;
+const DEFAULT_OPENAI_URL = ApiPath.OpenAI;
 
 
 
@@ -74,8 +70,7 @@ export const useAccessStore = createPersistStore(
       );
     },
     fetch() {
-      if (fetchState > 0 || getClientConfig()?.buildMode === "export") return;
-      fetchState = 1;
+      if (fetchState > 0) return;
       fetch("/api/config", {
         method: "post",
         body: null,

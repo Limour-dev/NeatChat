@@ -6,9 +6,7 @@ export const getBuildConfig = () => {
     );
   }
 
-  const buildMode = process.env.BUILD_MODE ?? "standalone";
   const version = "v1.2.0"; // TODO: 与发布版本保持一致，发版时手动更新
-
   const commitInfo = (() => {
     try {
       const childProcess = require("child_process");
@@ -34,10 +32,7 @@ export const getBuildConfig = () => {
   return {
     version,
     ...commitInfo,
-    buildMode,
-    isApp,
     template: process.env.DEFAULT_INPUT_TEMPLATE ?? DEFAULT_INPUT_TEMPLATE,
-  };
 };
 
 export type BuildConfig = ReturnType<typeof getBuildConfig>;
