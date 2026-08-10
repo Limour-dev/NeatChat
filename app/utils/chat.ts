@@ -169,40 +169,24 @@ export function stream(
   options: any,
 ) {
   let responseText = "";
-  let remainText = "";
   let finished = false;
   let responseRes: Response;
 
-  // animate response to make it looks smooth
-  function animateResponseText() {
-    if (finished || controller.signal.aborted) {
-      responseText += remainText;
-      console.log("[Response Animation] finished");
-      if (responseText?.length === 0) {
-        options.onError?.(new Error("empty response from server"));
-      }
-      return;
-    }
-
-    if (remainText.length > 0) {
-      const fetchCount = Math.max(1, Math.round(remainText.length / 60));
-      const fetchText = remainText.slice(0, fetchCount);
-      responseText += fetchText;
-      remainText = remainText.slice(fetchCount);
-      options.onUpdate?.(responseText, fetchText);
-    }
-
-    requestAnimationFrame(animateResponseText);
+  // Push the latest text to the UI immediately. This is called as soon as SSE
+  // data arrives (and at finish), so the response streams in progressively
+  // instead of appearing all at once at the end. No requestAnimationFrame
+  // dependency, which avoids throttling/pausing issues.
+  function flushText(chunk: string = "") {
+    if (chunk) responseText += chunk;
+    if (finished || controller.signal.aborted) return;
+    options.onUpdate?.(responseText, chunk);
   }
-
-  // start animaion
-  animateResponseText();
 
   const finish = () => {
     if (!finished) {
       console.debug("[ChatAPI] end");
       finished = true;
-      options.onFinish(responseText + remainText, responseRes); // 将res传递给onFinish
+      options.onFinish(responseText, responseRes); // 将res传递给onFinish
     }
   };
 
@@ -267,7 +251,9 @@ export function stream(
         try {
           const chunk = parseSSE(msg.data);
           if (chunk) {
-            remainText += chunk;
+            // Push the chunk to the UI immediately so the response streams in
+            // progressively instead of appearing all at once at the end.
+            flushText(chunk);
           }
         } catch (e) {
           console.error("[Request] parse error", text, msg, e);
