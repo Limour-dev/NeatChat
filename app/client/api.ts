@@ -18,6 +18,8 @@ export type MessageRole = (typeof ROLES)[number];
 export const Models = ["gpt-3.5-turbo", "gpt-4"] as const;
 export type ChatModel = ModelType;
 
+export type ApiFormat = "anthropic-messages" | "openai-responses";
+
 export interface MultimodalContent {
   type: "text" | "image_url";
   text?: string;
@@ -166,17 +168,31 @@ export function getHeaders(ignoreHeaders: boolean = false) {
   }
 
   const { apiKey, isEnabledAccessControl } = getConfig();
+  const apiFormat: ApiFormat = accessStore.apiFormat || "openai-responses";
 
   const authHeader = "Authorization";
-
   const bearerToken = getBearerToken(apiKey);
 
-  if (bearerToken) {
-    headers[authHeader] = bearerToken;
-  } else if (isEnabledAccessControl && validString(accessStore.accessCode)) {
-    headers["Authorization"] = getBearerToken(
-      ACCESS_CODE_PREFIX + accessStore.accessCode,
-    );
+  if (apiFormat === "anthropic-messages") {
+    // anthropic-messages: x-api-key + anthropic-version
+    headers["anthropic-version"] = "2023-06-01";
+    if (apiKey) {
+      headers["x-api-key"] = apiKey.trim();
+      // 同时保留 Authorization，供 NeatChat 服务端 auth() 校验 access code / 注入系统 key
+      headers[authHeader] = getBearerToken(apiKey);
+    } else if (isEnabledAccessControl && validString(accessStore.accessCode)) {
+      headers[authHeader] = getBearerToken(
+        ACCESS_CODE_PREFIX + accessStore.accessCode,
+      );
+    }
+  } else {
+    if (bearerToken) {
+      headers[authHeader] = bearerToken;
+    } else if (isEnabledAccessControl && validString(accessStore.accessCode)) {
+      headers[authHeader] = getBearerToken(
+        ACCESS_CODE_PREFIX + accessStore.accessCode,
+      );
+    }
   }
 
   return headers;

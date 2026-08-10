@@ -21,6 +21,7 @@ import { cloudflareAIGatewayUrl } from "@/app/utils/cloudflare";
 import { DalleSize, DalleQuality, DalleStyle } from "@/app/typing";
 
 import {
+  ApiFormat,
   ChatOptions,
   getHeaders,
   LLMApi,
@@ -46,19 +47,46 @@ export interface OpenAIListModelResponse {
   }>;
 }
 
-export interface RequestPayload {
+export type AnthropicContentBlock =
+  | { type: "text"; text: string }
+  | {
+      type: "image";
+      source: {
+        type: "base64" | "url";
+        media_type?: string;
+        data?: string;
+        url?: string;
+      };
+    };
+
+export type ResponsesContentBlock =
+  | { type: "input_text" | "output_text"; text: string }
+  | { type: "input_image"; image_url: string };
+
+export interface AnthropicMessageRequestPayload {
+  model: string;
+  system?: string;
   messages: {
-    role: "system" | "user" | "assistant";
-    content: string | MultimodalContent[];
+    role: "user" | "assistant";
+    content: string | AnthropicContentBlock[];
+  }[];
+  max_tokens?: number;
+  stream?: boolean;
+  temperature?: number;
+  top_p?: number;
+}
+
+export interface OpenAIResponsesRequestPayload {
+  model: string;
+  instructions?: string;
+  input: {
+    role: "user" | "assistant" | "system";
+    content: string | ResponsesContentBlock[];
   }[];
   stream?: boolean;
-  model: string;
-  temperature: number;
-  presence_penalty: number;
-  frequency_penalty: number;
-  top_p: number;
-  max_tokens?: number;
-  max_completion_tokens?: number;
+  temperature?: number;
+  top_p?: number;
+  max_output_tokens?: number;
 }
 
 export interface DalleRequestPayload {
@@ -69,6 +97,111 @@ export interface DalleRequestPayload {
   size: DalleSize;
   quality: DalleQuality;
   style: DalleStyle;
+}
+
+/**
+ * 将 NeatChat 的消息内容转换为 anthropic-messages 格式的 content blocks
+ */
+function convertToAnthropicContent(
+  content: string | MultimodalContent[],
+): string | AnthropicContentBlock[] {
+  if (typeof content === "string") {
+    return content;
+  }
+  return content.map((part): AnthropicContentBlock => {
+    if (part.type === "image_url" && part.image_url?.url) {
+      const url = part.image_url.url;
+      // data:image/png;base64,....  ->  base64 source
+      const match = url.match(/^data:(.*?);base64,(.*)$/s);
+      if (match) {
+        return {
+          type: "image",
+          source: {
+            type: "base64",
+            media_type: match[1],
+            data: match[2],
+          },
+        };
+      }
+      return {
+        type: "image",
+        source: { type: "url", url },
+      };
+    }
+    return { type: "text", text: part.text || "" };
+  });
+}
+
+/**
+ * 将 NeatChat 的消息内容转换为 openai-responses 格式的 content blocks
+ */
+function convertToResponsesContent(
+  content: string | MultimodalContent[],
+  textType: "input_text" | "output_text" = "input_text",
+): string | ResponsesContentBlock[] {
+  if (typeof content === "string") {
+    return content;
+  }
+  return content.map((part): ResponsesContentBlock => {
+    if (part.type === "image_url" && part.image_url?.url) {
+      return { type: "input_image", image_url: part.image_url.url };
+    }
+    return { type: textType, text: part.text || "" };
+  });
+}
+
+interface SSEParseState {
+  isInThinking: boolean;
+  setInThinking: (v: boolean) => void;
+}
+
+/**
+ * 解析 anthropic-messages SSE 流
+ * events: content_block_delta (text_delta / thinking_delta)
+ */
+function parseAnthropicSSE(text: string, state: SSEParseState): string | undefined {
+  const json = JSON.parse(text);
+  if (json.type === "content_block_delta") {
+    const delta = json.delta;
+    if (delta?.type === "text_delta" && delta?.text) {
+      if (state.isInThinking) {
+        state.setInThinking(false);
+        return "\n response\n\n" + delta.text;
+      }
+      return delta.text;
+    }
+    if (delta?.type === "thinking_delta" && delta?.thinking) {
+      if (!state.isInThinking) {
+        state.setInThinking(true);
+        return " thinking\n" + delta.thinking;
+      }
+      return delta.thinking;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * 解析 openai-responses SSE 流
+ * events: response.output_text.delta / response.reasoning_summary_text.delta
+ */
+function parseResponsesSSE(text: string, state: SSEParseState): string | undefined {
+  const json = JSON.parse(text);
+  if (json.type === "response.output_text.delta" && json.delta) {
+    if (state.isInThinking) {
+      state.setInThinking(false);
+      return "\n response\n\n" + json.delta;
+    }
+    return json.delta;
+  }
+  if (json.type === "response.reasoning_summary_text.delta" && json.delta) {
+    if (!state.isInThinking) {
+      state.setInThinking(true);
+      return " thinking\n" + json.delta;
+    }
+    return json.delta;
+  }
+  return undefined;
 }
 
 export class ChatGPTApi implements LLMApi {
@@ -100,7 +233,7 @@ export class ChatGPTApi implements LLMApi {
     return cloudflareAIGatewayUrl([baseUrl, path].join("/"));
   }
 
-  async extractMessage(res: any) {
+  async extractMessage(res: any, apiFormat: ApiFormat = "openai-responses") {
     if (res.error) {
       return "```\n" + JSON.stringify(res, null, 4) + "\n```";
     }
@@ -121,7 +254,30 @@ export class ChatGPTApi implements LLMApi {
         },
       ];
     }
-    return res.choices?.at(0)?.message?.content ?? res;
+
+    if (apiFormat === "anthropic-messages") {
+      // anthropic-messages: content is an array of blocks
+      const text = res.content
+        ?.map?.((block: any) => (block?.type === "text" ? block?.text : ""))
+        .filter(Boolean)
+        .join("");
+      return text || res;
+    }
+
+    // openai-responses: top-level output_text or output[].content[].text
+    if (typeof res.output_text === "string" && res.output_text.length > 0) {
+      return res.output_text;
+    }
+    const outputText = res.output
+      ?.map?.((item: any) =>
+        item?.content
+          ?.map?.((c: any) => (c?.type === "output_text" ? c?.text : ""))
+          .filter(Boolean)
+          .join(""),
+      )
+      .filter(Boolean)
+      .join("");
+    return outputText || res;
   }
 
   async chat(options: ChatOptions) {
@@ -134,10 +290,15 @@ export class ChatGPTApi implements LLMApi {
       },
     };
 
-    let requestPayload: RequestPayload | DalleRequestPayload;
+    const accessStore = useAccessStore.getState();
+    const apiFormat: ApiFormat = accessStore.apiFormat || "openai-responses";
+
+    let requestPayload:
+      | AnthropicMessageRequestPayload
+      | OpenAIResponsesRequestPayload
+      | DalleRequestPayload;
 
     const isDalle3 = _isDalle3(options.config.model);
-    const isO1 = options.config.model.startsWith("o1");
     if (isDalle3) {
       const prompt = getMessageTextContent(
         options.messages.slice(-1)?.pop() as any,
@@ -152,44 +313,78 @@ export class ChatGPTApi implements LLMApi {
         quality: options.config?.quality ?? "standard",
         style: options.config?.style ?? "vivid",
       };
-    } else {
+    } else if (apiFormat === "anthropic-messages") {
       const visionModel = isVisionModel(options.config.model);
-      const messages: ChatOptions["messages"] = [];
+      const messages: AnthropicMessageRequestPayload["messages"] = [];
+      let systemText = "";
+
       for (const v of options.messages) {
         const content = visionModel
           ? await preProcessImageContent(v.content)
-          : v.role === "assistant" // 如果 role 是 assistant
-          ? getMessageTextContentWithoutThinking(v) // 调用 getMessageTextContentWithoutThinking
-          : getMessageTextContent(v); // 否则调用 getMessageTextContent
-        if (!(isO1 && v.role === "system"))
-          messages.push({ role: v.role, content });
+          : v.role === "assistant"
+          ? getMessageTextContentWithoutThinking(v)
+          : getMessageTextContent(v);
+
+        if (v.role === "system") {
+          // anthropic: system 放顶层 system 字段
+          systemText += (systemText ? "\n\n" : "") + content;
+          continue;
+        }
+
+        const anthropicContent = convertToAnthropicContent(content);
+        messages.push({
+          role: v.role as "user" | "assistant",
+          content: anthropicContent,
+        });
       }
 
-      // O1 not support image, tools and system, stream, logprobs, temperature, top_p, n, presence_penalty, frequency_penalty yet.
       requestPayload = {
-        messages,
-        stream: options.config.stream,
         model: modelConfig.model,
-        temperature: !isO1 ? modelConfig.temperature : 1,
-        presence_penalty: !isO1 ? modelConfig.presence_penalty : 0,
-        frequency_penalty: !isO1 ? modelConfig.frequency_penalty : 0,
-        top_p: !isO1 ? modelConfig.top_p : 1,
-        // max_tokens: Math.max(modelConfig.max_tokens, 1024),
-        // Please do not ask me why not send max_tokens, no reason, this param is just shit, I dont want to explain anymore.
+        system: systemText || undefined,
+        messages,
+        max_tokens: Math.max(modelConfig.max_tokens, 1024),
+        stream: options.config.stream,
+        temperature: modelConfig.temperature,
+        top_p: modelConfig.top_p,
       };
+    } else {
+      // openai-responses
+      const visionModel = isVisionModel(options.config.model);
+      const input: OpenAIResponsesRequestPayload["input"] = [];
+      let instructions = "";
 
-      // O1 使用 max_completion_tokens 控制token数 (https://platform.openai.com/docs/guides/reasoning#controlling-costs)
-      if (isO1) {
-        requestPayload["max_completion_tokens"] = modelConfig.max_tokens;
+      for (const v of options.messages) {
+        const content = visionModel
+          ? await preProcessImageContent(v.content)
+          : v.role === "assistant"
+          ? getMessageTextContentWithoutThinking(v)
+          : getMessageTextContent(v);
+
+        if (v.role === "system") {
+          // openai-responses: system 放 instructions 字段
+          instructions += (instructions ? "\n\n" : "") + content;
+          continue;
+        }
+
+        const responsesContent = convertToResponsesContent(
+          content,
+          v.role === "assistant" ? "output_text" : "input_text",
+        );
+        input.push({ role: v.role as "user" | "assistant", content: responsesContent });
       }
 
-      // add max_tokens to vision model
-      if (visionModel) {
-        requestPayload["max_tokens"] = Math.max(modelConfig.max_tokens, 4000);
-      }
+      requestPayload = {
+        model: modelConfig.model,
+        instructions: instructions || undefined,
+        input,
+        stream: options.config.stream,
+        temperature: modelConfig.temperature,
+        top_p: modelConfig.top_p,
+        max_output_tokens: Math.max(modelConfig.max_tokens, 1024),
+      };
     }
 
-    console.log("[Request] openai payload: ", requestPayload);
+    console.log(`[Request] ${apiFormat} payload: `, requestPayload);
 
     const shouldStream = !isDalle3 && !!options.config.stream;
     const controller = new AbortController();
@@ -197,10 +392,18 @@ export class ChatGPTApi implements LLMApi {
 
     try {
       const chatPath = this.path(
-        isDalle3 ? OpenaiPath.ImagePath : OpenaiPath.ChatPath,
+        isDalle3
+          ? OpenaiPath.ImagePath
+          : apiFormat === "anthropic-messages"
+          ? OpenaiPath.MessagesPath
+          : OpenaiPath.ResponsesPath,
       );
       if (shouldStream) {
         let isInThinking = false;
+
+        const parseSSE = apiFormat === "anthropic-messages"
+          ? parseAnthropicSSE
+          : parseResponsesSSE;
 
         stream(
           chatPath,
@@ -209,34 +412,12 @@ export class ChatGPTApi implements LLMApi {
           controller,
           // parseSSE
           (text: string) => {
-            const json = JSON.parse(text);
-            const choices = json.choices as Array<{
-              delta: {
-                content: string | undefined;
-                reasoning_content: string | undefined;
-              };
-            }>;
-            const reasoning = choices[0]?.delta?.reasoning_content;
-            const content = choices[0]?.delta?.content;
-
-            if (reasoning && reasoning.length > 0) {
-              if (!isInThinking) {
-                isInThinking = true;
-                return " thinking\n" + reasoning;
-              } else {
-                return reasoning;
-              }
-            }
-
-            if (content && content.length > 0) {
-              if (isInThinking) {
-                isInThinking = false;
-                return "\n response\n\n" + content;
-              } else {
-                return content;
-              }
-            }
-            return choices[0]?.delta?.content;
+            return parseSSE(text, {
+              isInThinking,
+              setInThinking: (v: boolean) => {
+                isInThinking = v;
+              },
+            });
           },
           options,
         );
@@ -251,14 +432,14 @@ export class ChatGPTApi implements LLMApi {
         // make a fetch request
         const requestTimeoutId = setTimeout(
           () => controller.abort(),
-          isDalle3 || isO1 ? REQUEST_TIMEOUT_MS * 4 : REQUEST_TIMEOUT_MS, // dalle3 using b64_json is slow.
+          isDalle3 ? REQUEST_TIMEOUT_MS * 4 : REQUEST_TIMEOUT_MS, // dalle3 using b64_json is slow.
         );
 
         const res = await fetch(chatPath, chatPayload);
         clearTimeout(requestTimeoutId);
 
         const resJson = await res.json();
-        const message = await this.extractMessage(resJson);
+        const message = await this.extractMessage(resJson, apiFormat);
         options.onFinish(message, res);
       }
     } catch (e) {

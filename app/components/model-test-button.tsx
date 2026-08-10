@@ -171,6 +171,7 @@ export function ModelTestButton(props: {
           true,
           abortControllerRef.current?.signal,
           props.onModelTested,
+          accessStore.apiFormat || "openai-responses",
         );
       }
 

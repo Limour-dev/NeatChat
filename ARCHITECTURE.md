@@ -34,8 +34,8 @@
 │  ┌───────────────────────▼───────────────────────────────┐  │
 │  │  客户端 API 层 (app/client)                            │  │
 │  │  platforms/openai                                 │  │
-│  │  stream()  SSE 流式解析 + 工具调用循环 + 动画渲染       │  │
-│  └───────────────────────┬───────────────────────────────┘  │
+│  │  stream()  SSE 流式解析 + 打字机动画渲染           │  │
+│  │  支持 anthropic-messages / openai-responses 双格式  │  │
 └──────────────────────────┼──────────────────────────────────┘
                            │ HTTP / SSE
 ┌──────────────────────────▼──────────────────────────────────┐
@@ -46,8 +46,7 @@
 └──────────────────────────┬──────────────────────────────────┘
                            │ 直接转发
 ┌──────────────────────────▼──────────────────────────────────┐
-│  上游 LLM 提供商 (OpenAI / OpenAI 兼容网关 / 聚合站) │
-└─────────────────────────────────────────────────────────────┘
+│  上游 LLM 提供商 (Anthropic API / OpenAI Responses API / 兼容网关) │
 
 ```
 ### 构建模式
@@ -71,7 +70,7 @@ app/
 ├── config/                      # 构建/客户端/服务端配置
 │   ├── build.ts                 #   构建时配置（版本、commit）
 │   ├── client.ts                #   客户端配置（读 meta 标签）
-│   └── server.ts                #   服务端 env 配置（OpenAI 密钥、CODE、CUSTOM_MODELS）
+│   └── server.ts                #   服务端 env 配置（密钥、CODE、CUSTOM_MODELS、API_FORMAT）
 ├── store/                       # Zustand store（见 §3）
 │   ├── chat.ts access.ts config.ts mask.ts prompt.ts update.ts index.ts
 ├── client/                      # 客户端 LLM API 抽象（见 §4）
@@ -129,8 +128,7 @@ test/                            # Jest 单测
 |-------|-----------|------|
 | `useChatStore` | `chat-next-web-store` | 会话列表、消息流、输入模板填充、上下文组装、自动标题、长短期记忆压缩 |
 | `useAppConfig` | `app-config` | 全局配置：主题、模型表、ModelConfig、功能开关 |
-| `useAccessStore` | `access-control` | OpenAI URL/APIKey、访问码、useCustomConfig、服务端下发的 DangerConfig |
-| `useMaskStore` | `mask-store` | 面具（预设人设/上下文/模型参数）CRUD + 内置面具 |
+| `useAccessStore` | `access-control` | OpenAI URL/APIKey、访问码、useCustomConfig、服务端下发的 DangerConfig（含 API_FORMAT） |
 | `usePromptStore` | `prompt-store` | 提示词库（内置 + 用户，Fuse.js 搜索） |
 | `useUpdateStore` | `chat-update` | 版本检查、用量查询 |
 | `useSyncStore` | `sync` | 状态导出/导入（本地 JSON 备份） |
@@ -173,25 +171,27 @@ abstract class LLMApi {
 }
 ```
 
-`ClientApi`（`api.ts`）是工厂：当前仅 OpenAI 平台（`ChatGPTApi`）。`getHeaders()` 生成
-`Authorization` 头（用户 API Key 或 `nk-` 访问码前缀）。
-
+`ClientApi`（`api.ts`）是工厂：当前仅 OpenAI 平台（`ChatGPTApi`）。`getHeaders()` 按
+`API_FORMAT` 生成认证头：`openai-responses` 走 `Authorization: Bearer <key>`（用户 API Key
+或 `nk-` 访问码前缀）；`anthropic-messages` 走 `x-api-key` + `anthropic-version: 2023-06-01`，
+同时保留 `Authorization` 供服务端 `auth()` 校验访问码 / 注入系统 Key。
 ### 4.2 地址解析
 
 `path()` 逻辑：优先读取 `useAccessStore` 的 `useCustomConfig` 自定义 URL；
 否则走 `/api/openai` 本地代理；最后统一经过 `cloudflareAIGatewayUrl()` 做 AI Gateway URL 重写（可选）。
 
-### 4.3 流式请求与工具循环（`app/utils/chat.ts` 的 `stream()`）
+聊天请求路径按 `API_FORMAT` 选择：`anthropic-messages` → `v1/messages`，
+`openai-responses` → `v1/responses`（常量见 `constant.ts` 的 `OpenaiPath`）。
+### 4.3 流式请求（`app/utils/chat.ts` 的 `stream()`）
 
 1. 用 `@fortaine/fetch-event-source` 发起 SSE POST。
-2. `parseSSE` 解析 OpenAI 格式（`delta.content` / `tool_calls` / `reasoning_content`）。
+2. `parseSSE` 由平台层按 `API_FORMAT` 注入解析器：
+   - `anthropic-messages`：`content_block_delta`（`text_delta` / `thinking_delta`）；
+   - `openai-responses`：`response.output_text.delta` / `response.reasoning_summary_text.delta`；
+   两者都输出 ` thinking\n...` / `\n response\n\n...` 标记给 UI 折叠思考内容。
 3. **打字机动画**：`animateResponseText` 用 `requestAnimationFrame` 把累积文本按帧吐出，
    让 `onUpdate` 平滑刷新 UI。
-4. **工具调用循环**：收到 `tool_calls` → 收集到 `runTools` → 流结束后执行对应工具
-   → `onAfterTool` 记录结果 → 把 `tool` 消息追加进
-   `requestPayload` 重新发起请求（最多循环直到不再产生工具调用）。
-5. 错误处理：非 200 / 非 SSE 响应 → 收集 body 文本或 JSON 展示给用户；`REQUEST_TIMEOUT_MS` 超时 abort。
-
+4. 错误处理：非 200 / 非 SSE 响应 → 收集 body 文本或 JSON 展示给用户；`REQUEST_TIMEOUT_MS` 超时 abort。
 ---
 
 ## 5. 服务端 API 层（`app/api`）
@@ -217,12 +217,12 @@ abstract class LLMApi {
 ### 5.3 OpenAI 系统一代理（`common.ts` `requestOpenai`）
 
 - 支持 `CUSTOM_MODELS` 过滤（`isModelAvailableInServer` 拒绝禁用模型，如 `DISABLE_GPT4`）；
+- 透传 `x-api-key` / `anthropic-version` 头；当 `API_FORMAT=anthropic-messages` 时，
+  将 `auth()` 注入/保留的 `Authorization: Bearer <key>` 转换为 `x-api-key`（兼容访问码场景）；
 - 10 分钟超时 abort；清理 `content-encoding` 等响应头以兼容上游 gzip。
-
 ### 5.4 其它端点
 
-- `config/route.ts`：下发 `DANGER_CONFIG`（needCode/hideUserApiKey/customModels/defaultModel 等，**不含密钥明文**）；
-- `artifacts/route.ts`：Artifacts 分享 → Cloudflare KV（按内容 md5 作 key + TTL）；
+- `config/route.ts`：下发 `DANGER_CONFIG`（needCode/hideUserApiKey/customModels/defaultModel/apiFormat 等，**不含密钥明文**）；
 - `model-test/route.ts`：批量测试模型可用性（并发 + 5s 超时）；
 - `proxy/route.ts`：通用代理转发（用服务端 OPENAI_API_KEY，仅 GET JSON）。
 
@@ -273,9 +273,9 @@ abstract class LLMApi {
 
 `OPENAI_API_KEY`（支持逗号分隔轮询）、`CODE`（访问码，md5 后比较）、`BASE_URL`、
 `OPENAI_ORG_ID`、`CUSTOM_MODELS`、`DEFAULT_MODEL`、`DISABLE_GPT4`、`HIDE_USER_API_KEY`、
-`ENABLE_BALANCE_QUERY`、`DISABLE_FAST_LINK`、
+`ENABLE_BALANCE_QUERY`、`DISABLE_FAST_LINK`、`API_FORMAT`（调用格式：`anthropic-messages` |
+`openai-responses`，默认 `openai-responses`，由用户在环境变量中显式指定，不根据模型名推断）、
 `CLOUDFLARE_*`（KV）、`PROXY_URL`（Docker proxychains）等。
-
 ### 8.2 构建时（`app/config/build.ts`）
 
 固定 `standalone` 模式；版本号硬编码 `v1.2.0`。
@@ -295,12 +295,13 @@ OpenAI URL/Key、`useCustomConfig`、访问码；全局配置（主题、模型�
   → fillTemplateWith（模板填充）
   → 组装上下文 getMessagesWithMemory（系统提示 + 记忆 + context + 最近消息）
   → getClientApi(provider).llm.chat({...})
-      → 平台实现（如 ChatGPTApi.chat）
+      → 平台实现（ChatGPTApi.chat，按 API_FORMAT 构建请求体）
+          → anthropic-messages: {model, system, messages, max_tokens} → v1/messages
+          → openai-responses:  {model, instructions, input, max_output_tokens} → v1/responses
           → path() 解析：/api/openai（本地代理）
           → stream() → fetchEventSource（window.fetch）
-              → Next.js /api/[provider] 路由 → auth() 鉴权 → 上游转发
-              → SSE 流式返回 → parseSSE → 打字机动画 onUpdate → UI 增量渲染
-              → 若含 tool_calls → 执行工具并回填后重新请求
+              → Next.js /api/[provider] 路由 → auth() 鉴权 → 上游转发（x-api-key / Authorization）
+              → SSE 流式返回 → 按格式 parseSSE → 打字机动画 onUpdate → UI 增量渲染
   → onFinish → onNewMessage → 统计 + 标题生成 + 记忆压缩
   → useChatStore update() → IndexedDB 持久化
 ```
@@ -323,14 +324,16 @@ OpenAI URL/Key、`useCustomConfig`、访问码；全局配置（主题、模型�
 
 1. **单一构建模式**（standalone + Docker）是"一套代码服务端/浏览器"的基础：服务端代理隐藏密钥，
    浏览器经本地 `/api/*` 访问上游。
-2. **Provider 可扩展**：新增模型提供商 = 在 `constant.ts` 加模型表 + `app/client/platforms/`
+2. **API 调用格式可配置**：`API_FORMAT` 环境变量选择 `anthropic-messages` 或
+   `openai-responses`（默认 responses），由用户在环境变量中显式指定，不根据模型名推断；
+   客户端据此构建请求体 / 解析 SSE，服务端据此转换认证头。
+3. **Provider 可扩展**：新增模型提供商 = 在 `constant.ts` 加模型表 + `app/client/platforms/`
    加一个实现 + `app/api/` 加一个 handler（或复用 openai 兼容协议）+ `access.ts` 加配置项，
    其余（UI、记忆、导出）全部复用。
-3. **本地优先**：所有数据落 IndexedDB，导出/导入以 JSON 快照合并，
+4. **本地优先**：所有数据落 IndexedDB，导出/导入以 JSON 快照合并，
    无服务端账号体系。
-4. **安全边界**：服务端只下发非敏感配置（`/api/config`）；访问码 md5 存储比对；
+5. **安全边界**：服务端只下发非敏感配置（`/api/config`）；访问码 md5 存储比对；
    密钥永不进入客户端构建产物。
-
 ---
 
 ## 12. 部署方式

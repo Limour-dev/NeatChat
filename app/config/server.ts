@@ -19,6 +19,8 @@ declare global {
       CUSTOM_MODELS?: string; // to control custom models
       DEFAULT_MODEL?: string; // to control default model in every new chat window
 
+      // api calling format: anthropic-messages | openai-responses
+      API_FORMAT?: string;
       // google tag manager
       GTM_ID?: string;
 
@@ -68,6 +70,10 @@ export const getServerSideConfig = () => {
   let customModels = process.env.CUSTOM_MODELS ?? "";
   let defaultModel = process.env.DEFAULT_MODEL ?? "";
 
+  // api calling format: anthropic-messages | openai-responses (default: openai-responses)
+  const apiFormatEnv = (process.env.API_FORMAT ?? "openai-responses").trim();
+  const apiFormat: "anthropic-messages" | "openai-responses" =
+    apiFormatEnv === "anthropic-messages" ? "anthropic-messages" : "openai-responses";
   if (disableGPT4) {
     if (customModels) customModels += ",";
     customModels += DEFAULT_MODELS.filter(
@@ -92,6 +98,8 @@ export const getServerSideConfig = () => {
     baseUrl: process.env.BASE_URL,
     apiKey: getApiKey(process.env.OPENAI_API_KEY),
     openaiOrgId: process.env.OPENAI_ORG_ID,
+
+    apiFormat,
 
     cloudflareAccountId: process.env.CLOUDFLARE_ACCOUNT_ID,
     cloudflareKVNamespaceId: process.env.CLOUDFLARE_KV_NAMESPACE_ID,

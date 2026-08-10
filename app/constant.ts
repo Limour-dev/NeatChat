@@ -75,7 +75,8 @@ export enum StoreKey {
 }
 
 export const OpenaiPath = {
-  ChatPath: "v1/chat/completions",
+  MessagesPath: "v1/messages", // anthropic-messages
+  ResponsesPath: "v1/responses", // openai-responses
   ImagePath: "v1/images/generations",
   UsagePath: "dashboard/billing/usage",
   SubsPath: "dashboard/billing/subscription",

@@ -19,6 +19,7 @@ export async function testModel(
   baseUrl: string = "https://api.openai.com",
   timeoutSeconds: number = 5,
   signal?: AbortSignal,
+  apiFormat: "anthropic-messages" | "openai-responses" = "openai-responses",
 ): Promise<ModelTestResult> {
   const startTime = Date.now();
 
@@ -40,29 +41,51 @@ export async function testModel(
       });
     }
 
-    // 构建请求URL
-    const url = `${baseUrl}/v1/chat/completions`;
+    // 构建请求URL与请求体（按 apiFormat）
+    const url =
+      apiFormat === "anthropic-messages"
+        ? `${baseUrl}/v1/messages`
+        : `${baseUrl}/v1/responses`;
 
-    // 构建请求体
-    const requestBody = {
-      model: model,
-      messages: [
-        {
-          role: "user",
-          content: "Hello!",
-        },
-      ],
-      max_tokens: 1,
-      stream: false,
-    };
+    const requestBody =
+      apiFormat === "anthropic-messages"
+        ? {
+            model: model,
+            max_tokens: 1,
+            messages: [
+              {
+                role: "user",
+                content: "Hello!",
+              },
+            ],
+            stream: false,
+          }
+        : {
+            model: model,
+            input: [
+              {
+                role: "user",
+                content: "Hello!",
+              },
+            ],
+            max_output_tokens: 1,
+            stream: false,
+          };
 
     // 发送请求
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (apiFormat === "anthropic-messages") {
+      headers["x-api-key"] = apiKey;
+      headers["anthropic-version"] = "2023-06-01";
+    } else {
+      headers["Authorization"] = `Bearer ${apiKey}`;
+    }
+
     const response = await fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
+      headers,
       body: JSON.stringify(requestBody),
       signal: controller.signal,
     });
@@ -131,6 +154,7 @@ export async function testModels(
     result: ModelTestResult,
     allResults?: Record<string, ModelTestResult>,
   ) => void,
+  apiFormat: "anthropic-messages" | "openai-responses" = "openai-responses",
 ): Promise<Record<string, ModelTestResult>> {
   const results: Record<string, ModelTestResult> = {};
 
@@ -152,6 +176,7 @@ export async function testModels(
       baseUrl,
       timeoutSeconds,
       signal,
+      apiFormat,
     );
 
     // 调用单个模型测试完成的回调，传递累积的测试结果

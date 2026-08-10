@@ -3,7 +3,7 @@ import {
   StoreKey,
   ApiPath,
 } from "../constant";
-import { getHeaders } from "../client/api";
+import { getHeaders, ApiFormat } from "../client/api";
 import { createPersistStore } from "../utils/store";
 import { ensure } from "../utils/clone";
 import { DEFAULT_CONFIG } from "./config";
@@ -33,6 +33,9 @@ const DEFAULT_ACCESS_STATE = {
   disableFastLink: false,
   customModels: "",
   defaultModel: "",
+
+  // api calling format: anthropic-messages | openai-responses
+  apiFormat: "openai-responses" as ApiFormat,
 };
 
 export const useAccessStore = createPersistStore(

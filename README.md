@@ -51,6 +51,9 @@ services:
       - TZ=Asia/Shanghai
       - BASE_URL=https://xxxx
       - CUSTOM_MODELS=-all,+gpt-4o-mini@Deepbricks,+ChatGPT@OpenAI,+claude@OpenRouter,+gemini@Vertex
+      # api 调用格式：anthropic-messages（Claude 原生 API）或 openai-responses（OpenAI Responses API）
+      # 默认 openai-responses；由用户在环境变量中显式指定，不根据模型名推断
+      - API_FORMAT=openai-responses
       - ENABLE_BALANCE_QUERY=1
       - HOSTNAME=0.0.0.0
       - DEFAULT_MODEL=ChatGPT

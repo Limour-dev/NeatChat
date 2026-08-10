@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSideConfig } from "../config/server";
-import { OPENAI_BASE_URL, ServiceProvider } from "../constant";
+import { OPENAI_BASE_URL, ServiceProvider, ACCESS_CODE_PREFIX } from "../constant";
 import { cloudflareAIGatewayUrl } from "../utils/cloudflare";
 import { isModelAvailableInServer } from "../utils/model";
-
 const serverConfig = getServerSideConfig();
 
 export async function requestOpenai(req: NextRequest) {
@@ -12,8 +11,20 @@ export async function requestOpenai(req: NextRequest) {
   const authValue = req.headers.get("Authorization") ?? "";
   const authHeaderName = "Authorization";
 
-  let path = `${req.nextUrl.pathname}`.replaceAll("/api/openai/", "");
+  // anthropic-messages: forward x-api-key + anthropic-version if present
+  let xApiKey = req.headers.get("x-api-key") ?? "";
+  const anthropicVersion = req.headers.get("anthropic-version") ?? "";
 
+  // anthropic 上游需要 x-api-key；若服务端配置了 anthropic-messages 格式，
+  // 将 Authorization: Bearer <key> 转换为 x-api-key（auth() 已注入系统 key 或保留用户 key）
+  if (serverConfig.apiFormat === "anthropic-messages" && !xApiKey) {
+    const bearer = authValue.replace(/^Bearer\s+/i, "").trim();
+    if (bearer && !bearer.startsWith(ACCESS_CODE_PREFIX)) {
+      xApiKey = bearer;
+    }
+  }
+
+  let path = `${req.nextUrl.pathname}`.replaceAll("/api/openai/", "");
   let baseUrl = serverConfig.baseUrl || OPENAI_BASE_URL;
 
   if (!baseUrl.startsWith("http")) {
@@ -36,11 +47,14 @@ export async function requestOpenai(req: NextRequest) {
 
   const fetchUrl = cloudflareAIGatewayUrl(`${baseUrl}/${path}`);
   console.log("fetchUrl", fetchUrl);
+
   const fetchOptions: RequestInit = {
     headers: {
       "Content-Type": "application/json",
       "Cache-Control": "no-store",
       [authHeaderName]: authValue,
+      ...(xApiKey && { "x-api-key": xApiKey }),
+      ...(anthropicVersion && { "anthropic-version": anthropicVersion }),
       ...(serverConfig.openaiOrgId && {
         "OpenAI-Organization": serverConfig.openaiOrgId,
       }),
